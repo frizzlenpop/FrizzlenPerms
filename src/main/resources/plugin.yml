@@ -1,0 +1,7 @@
+name: FrizzlenPerms
+version: '1.0-SNAPSHOT'
+main: org.frizzlenpop.frizzlenPerms.FrizzlenPerms
+api-version: '1.21'
+load: STARTUP
+authors: [ frizzlenpop ]
+description: A Plugin for Server Permissions
