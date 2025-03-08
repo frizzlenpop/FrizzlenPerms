@@ -6,12 +6,16 @@ import org.bukkit.entity.Player;
 import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.AuditLog;
+import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.models.Rank;
 import org.frizzlenpop.frizzlenPerms.models.TempRank;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
 import org.frizzlenpop.frizzlenPerms.utils.TimeUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -37,12 +41,12 @@ public class AddTempRankCommand implements SubCommand {
     
     @Override
     public String getDescription() {
-        return "Adds a temporary rank to a player.";
+        return "Add a temporary rank to a player";
     }
     
     @Override
     public String getUsage() {
-        return "/frizzlenperms addtemprank <player> <rank> <duration>";
+        return "/perms addtemprank <player> <rank> <duration>";
     }
     
     @Override
@@ -57,7 +61,7 @@ public class AddTempRankCommand implements SubCommand {
     
     @Override
     public List<String> getAliases() {
-        return List.of("temprankgive", "givetemprank", "temprank");
+        return new ArrayList<>();
     }
     
     @Override
@@ -96,20 +100,21 @@ public class AddTempRankCommand implements SubCommand {
         }
         
         // Get player data
-        UUID playerUUID = null;
-        Player targetPlayer = Bukkit.getPlayer(playerName);
+        final UUID playerUUID;
+        final Player targetPlayer = Bukkit.getPlayer(playerName);
         
         if (targetPlayer != null) {
             playerUUID = targetPlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            playerUUID = plugin.getDataManager().getPlayerUUID(playerName);
-            if (playerUUID == null) {
+            PlayerData playerData = plugin.getDataManager().getPlayerDataByName(playerName);
+            if (playerData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", playerName
                 ));
                 return false;
             }
+            playerUUID = playerData.getUuid();
         }
         
         // Calculate expiration time
@@ -122,42 +127,47 @@ public class AddTempRankCommand implements SubCommand {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Add temp rank
-                boolean success = plugin.getDataManager().addTempRank(playerUUID, tempRank);
-                
-                if (success) {
-                    // Log action
-                    String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
-                    plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.PLAYER_TEMP_RANK_ADD,
-                        playerUUID,
-                        sender instanceof Player ? ((Player) sender).getUniqueId() : null,
-                        "Added temporary rank " + rankName + " for " + TimeUtils.formatDuration(duration),
-                        plugin.getConfigManager().getServerName()
-                    );
-                    
-                    // Apply changes if player is online
-                    if (targetPlayer != null) {
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
-                        });
-                    }
-                    
-                    // Send success message
+                PlayerData playerData = plugin.getDataManager().getPlayerData(playerUUID);
+                if (playerData == null) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "admin.temp-rank-added", Map.of(
-                            "player", playerName,
-                            "rank", rank.getDisplayName(),
-                            "duration", TimeUtils.formatDuration(duration)
+                        MessageUtils.sendMessage(sender, "error.player-data-not-found", Map.of(
+                            "player", playerName
                         ));
                     });
-                } else {
+                    return;
+                }
+                
+                // Add the temp rank
+                playerData.addTemporaryRank(tempRank.getRankName(), tempRank.getExpirationTime());
+                plugin.getDataManager().savePlayerData(playerData);
+                
+                // Log action
+                String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
+                plugin.getAuditManager().logAction(
+                    sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                    executorName,
+                    AuditLog.ActionType.PLAYER_TEMP_RANK_ADD,
+                    playerName,
+                    "Added temporary rank " + rankName + " for " + TimeUtils.formatDuration(duration),
+                    plugin.getConfigManager().getServerName(),
+                    playerUUID
+                );
+                
+                // Apply changes if player is online
+                if (targetPlayer != null) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "error.temp-rank-add-failed", Map.of(
-                            "player", playerName,
-                            "rank", rankName
-                        ));
+                        plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
                     });
                 }
+                
+                // Send success message
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.temp-rank-added", Map.of(
+                        "player", playerName,
+                        "rank", rank.getDisplayName(),
+                        "duration", TimeUtils.formatDuration(duration)
+                    ));
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error adding temporary rank: " + e.getMessage());
                 e.printStackTrace();
@@ -194,6 +204,6 @@ public class AddTempRankCommand implements SubCommand {
             return List.of("1h", "1d", "7d", "30d");
         }
         
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 } 
