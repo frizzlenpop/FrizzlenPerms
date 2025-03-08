@@ -3,6 +3,7 @@ package org.frizzlenpop.frizzlenPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.frizzlenpop.frizzlenPerms.audit.AuditManager;
+import org.frizzlenpop.frizzlenPerms.chat.ChatManager;
 import org.frizzlenpop.frizzlenPerms.commands.CommandManager;
 import org.frizzlenpop.frizzlenPerms.data.DataManager;
 import org.frizzlenpop.frizzlenPerms.discord.DiscordManager;
@@ -30,6 +31,7 @@ public final class FrizzlenPerms extends JavaPlugin {
     private DiscordManager discordManager;
     private SyncManager syncManager;
     private AuditManager auditManager;
+    private ChatManager chatManager;
     
     @Override
     public void onEnable() {
@@ -83,43 +85,44 @@ public final class FrizzlenPerms extends JavaPlugin {
     }
     
     private void initializeManagers() {
-        // Order matters here for dependency injection
-        
-        // 1. Config manager (needed by everything else)
+        // Initialize config manager first
         configManager = new ConfigManager(this);
         
-        // 2. Initialize MessageUtils
+        // Initialize MessageUtils
         MessageUtils.initialize(this);
         
-        // 3. Data manager (handles storage)
+        // Initialize data manager
         dataManager = new DataManager(this);
         dataManager.initialize();
         
-        // 4. Audit manager (tracks permission/rank changes)
-        auditManager = new AuditManager(this, dataManager, configManager);
-        
-        // 5. Permission manager
+        // Initialize permission manager
         permissionManager = new PermissionManager(this, dataManager);
         permissionManager.initialize();
         
-        // 6. Rank manager (depends on the above)
+        // Initialize audit manager
+        auditManager = new AuditManager(this, dataManager, configManager);
+        
+        // Initialize rank manager
         rankManager = new RankManager(this, dataManager, configManager, permissionManager, auditManager);
         rankManager.initialize();
         
-        // 7. Command manager
+        // Initialize chat manager
+        chatManager = new ChatManager(this);
+        
+        // Initialize command manager
         commandManager = new CommandManager(this);
         commandManager.registerCommands();
         
-        // 8. GUI manager
+        // Initialize GUI manager
         guiManager = new GuiManager(this);
         
-        // 9. Discord manager (if enabled)
+        // Initialize Discord manager if enabled
         if (configManager.isDiscordEnabled()) {
             discordManager = new DiscordManager(this);
             discordManager.initialize();
         }
         
-        // 10. Sync manager (if enabled)
+        // Initialize sync manager if enabled
         if (configManager.isSyncEnabled()) {
             syncManager = new SyncManager(this);
             syncManager.initialize();
@@ -177,5 +180,14 @@ public final class FrizzlenPerms extends JavaPlugin {
     
     public AuditManager getAuditManager() {
         return auditManager;
+    }
+
+    /**
+     * Gets the chat manager instance.
+     *
+     * @return The chat manager instance
+     */
+    public ChatManager getChatManager() {
+        return chatManager;
     }
 }

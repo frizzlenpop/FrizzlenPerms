@@ -1012,4 +1012,130 @@ public class RankManager {
     public boolean deleteRank(String name) {
         return deleteRank(name, null);
     }
+    
+    /**
+     * Adds an inheritance relationship between two ranks.
+     *
+     * @param rankName The name of the rank that will inherit
+     * @param inheritedRankName The name of the rank to be inherited
+     * @param actor The player adding the inheritance, or null for console
+     * @return Whether the operation was successful
+     */
+    public boolean addInheritance(String rankName, String inheritedRankName, Player actor) {
+        // Check if ranks exist
+        Rank rank = dataManager.getRank(rankName);
+        Rank inheritedRank = dataManager.getRank(inheritedRankName);
+        
+        if (rank == null || inheritedRank == null) {
+            plugin.getLogger().warning("One or both ranks not found: " + rankName + ", " + inheritedRankName);
+            return false;
+        }
+        
+        // Check for circular inheritance
+        if (hasCircularInheritance(rankName, inheritedRankName)) {
+            plugin.getLogger().warning("Circular inheritance detected between " + rankName + " and " + inheritedRankName);
+            return false;
+        }
+        
+        // Add inheritance
+        rank.addInheritance(inheritedRankName);
+        
+        // Save the rank
+        dataManager.saveRank(rank);
+        
+        // Log the action
+        auditManager.logAction(
+            actor != null ? actor.getUniqueId() : null,
+            actor != null ? actor.getName() : "Console",
+            AuditLog.ActionType.RANK_MODIFY,
+            rankName,
+            "Added inheritance from " + inheritedRankName,
+            configManager.getServerName()
+        );
+        
+        // Update players with this rank
+        updatePlayersAfterRankChange(rankName);
+        
+        return true;
+    }
+    
+    /**
+     * Removes an inheritance relationship between two ranks.
+     *
+     * @param rankName The name of the rank that inherits
+     * @param inheritedRankName The name of the rank being inherited
+     * @param actor The player removing the inheritance, or null for console
+     * @return Whether the operation was successful
+     */
+    public boolean removeInheritance(String rankName, String inheritedRankName, Player actor) {
+        // Check if ranks exist
+        Rank rank = dataManager.getRank(rankName);
+        Rank inheritedRank = dataManager.getRank(inheritedRankName);
+        
+        if (rank == null || inheritedRank == null) {
+            plugin.getLogger().warning("One or both ranks not found: " + rankName + ", " + inheritedRankName);
+            return false;
+        }
+        
+        // Remove inheritance
+        if (rank.removeInheritance(inheritedRankName)) {
+            // Save the rank
+            dataManager.saveRank(rank);
+            
+            // Log the action
+            auditManager.logAction(
+                actor != null ? actor.getUniqueId() : null,
+                actor != null ? actor.getName() : "Console",
+                AuditLog.ActionType.RANK_MODIFY,
+                rankName,
+                "Removed inheritance from " + inheritedRankName,
+                configManager.getServerName()
+            );
+            
+            // Update players with this rank
+            updatePlayersAfterRankChange(rankName);
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Checks if adding an inheritance would create a circular dependency.
+     *
+     * @param rankName The name of the rank that will inherit
+     * @param inheritedRankName The name of the rank to be inherited
+     * @return True if circular inheritance would be created
+     */
+    private boolean hasCircularInheritance(String rankName, String inheritedRankName) {
+        Set<String> visited = new HashSet<>();
+        Queue<String> queue = new LinkedList<>();
+        
+        // Start with the rank to be inherited
+        queue.add(inheritedRankName);
+        visited.add(inheritedRankName);
+        
+        while (!queue.isEmpty()) {
+            String currentRank = queue.poll();
+            Rank rank = dataManager.getRank(currentRank);
+            
+            if (rank != null) {
+                for (String inherited : rank.getInheritance()) {
+                    // If we find the original rank, there's a cycle
+                    if (inherited.equals(rankName)) {
+                        return true;
+                    }
+                    
+                    // If we haven't visited this rank yet, add it to the queue
+                    if (!visited.contains(inherited)) {
+                        queue.add(inherited);
+                        visited.add(inherited);
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
 } 
