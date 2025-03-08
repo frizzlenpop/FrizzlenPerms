@@ -88,19 +88,23 @@ public class SyncPullCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.SYNC_PULL,
-                        serverName,
                         player.getUniqueId(),
+                        player.getName(),
+                        AuditLog.ActionType.SYNC_PULL,
+                        "All",
                         "Pulled permissions data from other servers",
-                        serverName
+                        serverName,
+                        null
                     );
                 } else {
                     plugin.getAuditManager().logAction(
+                        null,
+                        "Console",
                         AuditLog.ActionType.SYNC_PULL,
-                        serverName,
-                        null, // No UUID for console
+                        "All",
                         "Pulled permissions data from other servers",
-                        serverName
+                        serverName,
+                        null
                     );
                 }
                 

@@ -115,7 +115,7 @@ public class DiscordListener extends ListenerAdapter {
         });
         
         // Send success message
-        event.getHook().sendMessage("Successfully linked to Minecraft account: " + playerData.getName()).queue();
+        event.getHook().sendMessage("Successfully linked to Minecraft account: " + playerData.getPlayerName()).queue();
         
         // Send message to player if online
         Player player = Bukkit.getPlayer(playerUuid);
@@ -125,7 +125,7 @@ public class DiscordListener extends ListenerAdapter {
         }
         
         // Log the link
-        plugin.getLogger().info("Player " + playerData.getName() + " linked to Discord user: " + 
+        plugin.getLogger().info("Player " + playerData.getPlayerName() + " linked to Discord user: " + 
             event.getUser().getName() + "#" + event.getUser().getDiscriminator());
     }
     

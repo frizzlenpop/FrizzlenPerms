@@ -718,14 +718,16 @@ public class SQLiteStorage implements StorageProvider {
     public void addAuditLog(AuditLog auditLog) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "INSERT INTO audit_logs (timestamp, type, actor_uuid, target_uuid, action_data) " +
-                             "VALUES (?, ?, ?, ?, ?)")) {
+                     "INSERT INTO audit_logs (timestamp, type, actor_uuid, actor_name, target_uuid, action_data, server) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             
             stmt.setLong(1, auditLog.getTimestamp());
             stmt.setString(2, auditLog.getType().getDisplayName());
             stmt.setString(3, auditLog.getActorUuid() != null ? auditLog.getActorUuid().toString() : null);
-            stmt.setString(4, auditLog.getTargetUuid() != null ? auditLog.getTargetUuid().toString() : null);
-            stmt.setString(5, auditLog.getActionData());
+            stmt.setString(4, auditLog.getActorName());
+            stmt.setString(5, auditLog.getTargetUuid() != null ? auditLog.getTargetUuid().toString() : null);
+            stmt.setString(6, auditLog.getActionData());
+            stmt.setString(7, auditLog.getServer());
             
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -793,6 +795,10 @@ public class SQLiteStorage implements StorageProvider {
         UUID targetUuid = rs.getString("target_uuid") != null ? UUID.fromString(rs.getString("target_uuid")) : null;
         String actionData = rs.getString("action_data");
         String server = rs.getString("server");
+        
+        if (server == null || server.isEmpty()) {
+            server = "default";
+        }
         
         return new AuditLog(
             UUID.randomUUID(),

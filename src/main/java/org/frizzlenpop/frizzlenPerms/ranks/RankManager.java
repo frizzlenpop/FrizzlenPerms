@@ -615,38 +615,44 @@ public class RankManager {
      *
      * @param rankName The name of the rank
      * @param permission The permission to remove
-     * @param actor The player removing the permission
-     * @return True if successful
+     * @param actor The player removing the permission, or null for console
+     * @return Whether the operation was successful
      */
-    public boolean removeRankPermission(String rankName, String permission, Player actor) {
-        synchronized (rankLock) {
-            // Check if rank exists
-            Rank rank = getRank(rankName);
-            if (rank == null) {
-                return false;
-            }
-
-            // Remove permission
-            if (rank.hasPermission(permission)) {
-                rank.removePermission(permission);
-                dataManager.saveRank(rank);
-
-                // Update online players with this rank
-                updatePlayersAfterRankChange(rankName);
-
-                // Log action
-                auditManager.logAction(
-                    actor != null ? actor.getUniqueId() : null,
-                    actor != null ? actor.getName() : "Console",
-                    AuditLog.ActionType.RANK_MODIFY,
-                    rankName,
-                    "Removed permission: " + permission,
-                    configManager.getServerName()
-                );
-            }
-
-            return true;
+    public boolean removePermissionFromRank(String rankName, String permission, Player actor) {
+        // Check if rank exists
+        Rank rank = dataManager.getRank(rankName);
+        if (rank == null) {
+            plugin.getLogger().warning("Rank not found: " + rankName);
+            return false;
         }
+        
+        // Remove the permission
+        rank.removePermission(permission);
+        
+        // Also remove the negated version if it exists
+        if (!permission.startsWith("-")) {
+            rank.removePermission("-" + permission);
+        } else if (permission.startsWith("-")) {
+            rank.removePermission(permission.substring(1));
+        }
+        
+        // Save the rank
+        dataManager.saveRank(rank);
+        
+        // Log the action
+        auditManager.logAction(
+            actor != null ? actor.getUniqueId() : null,
+            actor != null ? actor.getName() : "Console",
+            AuditLog.ActionType.RANK_MODIFY,
+            rankName,
+            "Removed permission " + permission,
+            configManager.getServerName()
+        );
+        
+        // Update players with this rank
+        updatePlayersAfterRankChange(rankName);
+        
+        return true;
     }
     
     /**
@@ -774,51 +780,6 @@ public class RankManager {
             AuditLog.ActionType.RANK_MODIFY,
             rankName,
             "Added permission " + permission + " with value " + value,
-            configManager.getServerName()
-        );
-        
-        // Update players with this rank
-        updatePlayersAfterRankChange(rankName);
-        
-        return true;
-    }
-    
-    /**
-     * Removes a permission from a rank.
-     *
-     * @param rankName The name of the rank
-     * @param permission The permission to remove
-     * @param actor The player removing the permission, or null for console
-     * @return Whether the operation was successful
-     */
-    public boolean removePermissionFromRank(String rankName, String permission, Player actor) {
-        // Check if rank exists
-        Rank rank = dataManager.getRank(rankName);
-        if (rank == null) {
-            plugin.getLogger().warning("Rank not found: " + rankName);
-            return false;
-        }
-        
-        // Remove the permission
-        rank.removePermission(permission);
-        
-        // Also remove the negated version if it exists
-        if (!permission.startsWith("-")) {
-            rank.removePermission("-" + permission);
-        } else if (permission.startsWith("-")) {
-            rank.removePermission(permission.substring(1));
-        }
-        
-        // Save the rank
-        dataManager.saveRank(rank);
-        
-        // Log the action
-        auditManager.logAction(
-            actor != null ? actor.getUniqueId() : null,
-            actor != null ? actor.getName() : "Console",
-            AuditLog.ActionType.RANK_MODIFY,
-            rankName,
-            "Removed permission " + permission,
             configManager.getServerName()
         );
         

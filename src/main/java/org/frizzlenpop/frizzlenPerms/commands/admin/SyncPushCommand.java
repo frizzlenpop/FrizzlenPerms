@@ -88,19 +88,23 @@ public class SyncPushCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.SYNC_PUSH,
-                        serverName,
                         player.getUniqueId(),
+                        player.getName(),
+                        AuditLog.ActionType.SYNC_PUSH,
+                        "All",
                         "Pushed permissions data to other servers",
-                        serverName
+                        serverName,
+                        null
                     );
                 } else {
                     plugin.getAuditManager().logAction(
+                        null,
+                        "Console",
                         AuditLog.ActionType.SYNC_PUSH,
-                        serverName,
-                        null, // No UUID for console
+                        "All",
                         "Pushed permissions data to other servers",
-                        serverName
+                        serverName,
+                        null
                     );
                 }
                 

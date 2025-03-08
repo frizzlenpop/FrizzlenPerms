@@ -7,6 +7,7 @@ import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
+import org.frizzlenpop.frizzlenPerms.models.AuditLog;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -133,10 +134,10 @@ public class AddPermissionCommand implements SubCommand {
             plugin.getAuditManager().logAction(
                 actor != null ? actor.getUniqueId() : null,
                 actor != null ? actor.getName() : "Console",
-                "PLAYER_PERMISSION_ADD", // Using string instead of enum
+                AuditLog.ActionType.PERMISSION_ADD,
                 playerName,
                 "Added permission " + permission + (world != null ? " in world " + world : ""),
-                "default", // Server name
+                plugin.getConfigManager().getServerName() != null ? plugin.getConfigManager().getServerName() : "default",
                 playerData.getUuid()
             );
             

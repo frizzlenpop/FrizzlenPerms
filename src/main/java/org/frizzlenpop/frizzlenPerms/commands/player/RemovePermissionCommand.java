@@ -7,6 +7,7 @@ import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
+import org.frizzlenpop.frizzlenPerms.models.AuditLog;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,10 +139,15 @@ public class RemovePermissionCommand implements SubCommand {
             }
             
             // Log the action
-            // Using direct logger call instead of auditManager to prevent linter errors
-            plugin.getLogger().info("Permission removed: " + permission + 
-                (world != null ? " in world " + world : "") + " from player " + playerName + 
-                " by " + (actor != null ? actor.getName() : "Console"));
+            plugin.getAuditManager().logAction(
+                actor != null ? actor.getUniqueId() : null,
+                actor != null ? actor.getName() : "Console",
+                AuditLog.ActionType.PERMISSION_REMOVE,
+                playerName,
+                "Removed permission " + permission + (world != null ? " in world " + world : ""),
+                plugin.getConfigManager().getServerName() != null ? plugin.getConfigManager().getServerName() : "default",
+                playerData.getUuid()
+            );
             
             // Send success message
             if (world == null) {

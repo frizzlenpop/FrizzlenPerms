@@ -116,7 +116,7 @@ public class RemoveTempRankCommand implements SubCommand {
                 }
                 
                 // Check if player has the temp rank
-                boolean hasTempRank = playerData.isTemporaryRank(rankName);
+                boolean hasTempRank = playerData.getTemporaryRanks().containsKey(rankName);
                 if (!hasTempRank) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         MessageUtils.sendMessage(sender, "error.player-no-temp-rank", Map.of(
@@ -128,48 +128,40 @@ public class RemoveTempRankCommand implements SubCommand {
                 }
                 
                 // Remove temp rank
-                boolean success = plugin.getRankManager().removePlayerTemporaryRank(targetPlayer, rankName, sender instanceof Player ? (Player) sender : null);
+                playerData.removeTemporaryRank(rankName);
+                plugin.getDataManager().savePlayerData(playerData);
                 
-                if (success) {
-                    // Log action
-                    plugin.getAuditManager().logAction(
-                        sender instanceof Player ? ((Player) sender).getUniqueId() : null,
-                        sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
-                        AuditLog.ActionType.PLAYER_RANK_REMOVE,
-                        playerName,
-                        "Removed temporary rank " + rankName,
-                        plugin.getConfigManager().getServerName(),
-                        finalPlayerUUID
-                    );
-                    
-                    // Apply changes if player is online
-                    if (targetPlayer != null && targetPlayer.isOnline()) {
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            // Update permissions
-                            plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
-                            
-                            // Update display name and prefix
-                            plugin.getPermissionManager().updatePlayerPrefix(targetPlayer);
-                            plugin.getPermissionManager().updatePlayerSuffix(targetPlayer);
-                            plugin.getPermissionManager().updateDisplayName(targetPlayer);
-                        });
-                    }
-                    
-                    // Send success message
+                // Log action
+                plugin.getAuditManager().logAction(
+                    sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                    sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
+                    AuditLog.ActionType.PLAYER_TEMP_RANK_REMOVE,
+                    playerName,
+                    "Removed temporary rank " + rankName,
+                    plugin.getConfigManager().getServerName(),
+                    finalPlayerUUID
+                );
+                
+                // Apply changes if player is online
+                if (targetPlayer != null && targetPlayer.isOnline()) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "admin.temp-rank-removed", Map.of(
-                            "player", playerName,
-                            "rank", rank.getDisplayName()
-                        ));
-                    });
-                } else {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "error.temp-rank-remove-failed", Map.of(
-                            "player", playerName,
-                            "rank", rankName
-                        ));
+                        // Update permissions
+                        plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
+                        
+                        // Update display name and prefix
+                        plugin.getPermissionManager().updatePlayerPrefix(targetPlayer);
+                        plugin.getPermissionManager().updatePlayerSuffix(targetPlayer);
+                        plugin.getPermissionManager().updateDisplayName(targetPlayer);
                     });
                 }
+                
+                // Send success message
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.temp-rank-removed", Map.of(
+                        "player", playerName,
+                        "rank", rank.getDisplayName()
+                    ));
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error removing temporary rank: " + e.getMessage());
                 e.printStackTrace();

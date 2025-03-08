@@ -122,46 +122,38 @@ public class PurgeCommand implements SubCommand {
                     // Update permissions if player is online
                     if (targetPlayer != null && targetPlayer.isOnline()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            plugin.getPermissionManager().removeAttachment(finalPlayerUUID);
+                            plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
                         });
                     }
                 }
                 
                 // Purge player data
-                boolean success = plugin.getDataManager().deletePlayerData(finalPlayerUUID);
+                plugin.getDataManager().deletePlayerData(finalPlayerUUID);
                 
-                if (success) {
-                    // Log action
-                    plugin.getAuditManager().logAction(
-                        sender instanceof Player ? ((Player) sender).getUniqueId() : null,
-                        sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
-                        AuditLog.ActionType.PLAYER_DATA_PURGE,
-                        playerName,
-                        "Purged player data",
-                        plugin.getConfigManager().getServerName(),
-                        finalPlayerUUID
-                    );
-                    
-                    // Kick player if online
-                    if (targetPlayer != null && targetPlayer.isOnline()) {
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            targetPlayer.kickPlayer(MessageUtils.formatColors("&cYour permissions data has been purged."));
-                        });
-                    }
-                    
-                    // Send success message
+                // Log action
+                plugin.getAuditManager().logAction(
+                    sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                    sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
+                    AuditLog.ActionType.PLAYER_DATA_PURGE,
+                    playerName,
+                    "Purged player data",
+                    plugin.getConfigManager().getServerName(),
+                    finalPlayerUUID
+                );
+                
+                // Kick player if online
+                if (targetPlayer != null && targetPlayer.isOnline()) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "admin.purge-success", Map.of(
-                            "player", playerName
-                        ));
-                    });
-                } else {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "error.purge-failed", Map.of(
-                            "player", playerName
-                        ));
+                        targetPlayer.kickPlayer(MessageUtils.formatColors("&cYour permissions data has been purged."));
                     });
                 }
+                
+                // Send success message
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.purge-success", Map.of(
+                        "player", playerName
+                    ));
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error purging player data: " + e.getMessage());
                 e.printStackTrace();

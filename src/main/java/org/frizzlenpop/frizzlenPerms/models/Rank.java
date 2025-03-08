@@ -424,18 +424,18 @@ public class Rank {
     }
     
     /**
-     * Checks if the rank is the default rank.
+     * Checks if this rank is the default rank.
      *
-     * @return Whether the rank is the default rank
+     * @return True if this is the default rank
      */
     public boolean isDefault() {
         return isDefault;
     }
     
     /**
-     * Sets whether the rank is the default rank.
+     * Sets whether this rank is the default rank.
      *
-     * @param isDefault Whether the rank is the default rank
+     * @param isDefault Whether this rank is the default rank
      */
     public void setDefault(boolean isDefault) {
         this.isDefault = isDefault;
