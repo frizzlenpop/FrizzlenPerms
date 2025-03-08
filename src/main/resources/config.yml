@@ -1,0 +1,82 @@
+# FrizzlenPerms Configuration
+# Advanced Permissions & Rank System for Paper
+
+# Storage Configuration
+storage:
+  # Storage type: sqlite, mysql, or flatfile
+  type: sqlite
+  
+  # MySQL Configuration (only used if type is mysql)
+  mysql:
+    host: localhost
+    port: 3306
+    database: frizzlenperms
+    username: root
+    password: password
+    useSSL: false
+    poolSize: 10
+
+# Multi-Server Sync Configuration
+sync:
+  # Enable synchronization across multiple servers
+  enabled: false
+  
+  # Redis Configuration (required for sync)
+  redis:
+    host: localhost
+    port: 6379
+    password: ""
+    database: 0
+
+# Logging Configuration
+logging:
+  enabled: true
+  log_rank_changes: true
+  log_permission_changes: true
+  log_suspicious_activity: true
+
+# Anti-Abuse System Configuration
+anti_abuse:
+  enabled: true
+  auto_revoke_illegal_permissions: true
+  alert_admins_on_exploit_attempts: true
+  auto_ban_exploiters: false
+
+# Chat Configuration
+chat:
+  format: "{rank_prefix}{player_name}{rank_suffix}: {message}"
+  use_rank_colors: true
+
+# Auto-Rankup Configuration
+auto_rankup:
+  enabled: false
+  check_interval_minutes: 30
+
+# Rank Decay Configuration
+rank_decay:
+  enabled: false
+  check_interval_hours: 24
+  inactivity_days: 30
+
+# Discord Integration Configuration
+discord:
+  # Enable Discord integration
+  enabled: false
+  
+  # Discord bot token
+  token: ""
+  
+  # Discord guild ID
+  guild_id: ""
+  
+  # Discord log channel ID
+  log_channel_id: ""
+  
+  # Sync interval in minutes
+  sync_interval: 30
+  
+  # Role mappings (Minecraft rank name to Discord role ID)
+  role_mappings:
+    admin: "discord_role_id_here"
+    moderator: "discord_role_id_here"
+    default: "discord_role_id_here" 

@@ -4,4 +4,140 @@ main: org.frizzlenpop.frizzlenPerms.FrizzlenPerms
 api-version: '1.21'
 load: STARTUP
 authors: [ frizzlenpop ]
-description: A Plugin for Server Permissions
+description: Advanced Permissions & Rank System for Paper
+
+commands:
+  frizzlenperms:
+    description: Main command for FrizzlenPerms
+    aliases: [fp, fperms]
+    usage: /frizzlenperms <subcommand>
+  
+permissions:
+  frizzlenperms.admin:
+    description: Gives access to all FrizzlenPerms commands
+    default: op
+    children:
+      frizzlenperms.rank.*: true
+      frizzlenperms.permission.*: true
+      frizzlenperms.discord.*: true
+      frizzlenperms.audit.*: true
+      frizzlenperms.gui: true
+      frizzlenperms.reload: true
+  
+  frizzlenperms.rank.*:
+    description: Gives access to all rank commands
+    default: op
+    children:
+      frizzlenperms.rank.create: true
+      frizzlenperms.rank.delete: true
+      frizzlenperms.rank.set: true
+      frizzlenperms.rank.set.temporary: true
+      frizzlenperms.rank.history: true
+      frizzlenperms.rank.rollback: true
+      frizzlenperms.rank.list: true
+      frizzlenperms.rank.info: true
+  
+  frizzlenperms.rank.create:
+    description: Allows creating ranks
+    default: op
+  
+  frizzlenperms.rank.delete:
+    description: Allows deleting ranks
+    default: op
+  
+  frizzlenperms.rank.set:
+    description: Allows setting a player's rank
+    default: op
+  
+  frizzlenperms.rank.set.temporary:
+    description: Allows setting a temporary rank for a player
+    default: op
+  
+  frizzlenperms.rank.history:
+    description: Allows viewing a player's rank history
+    default: op
+  
+  frizzlenperms.rank.rollback:
+    description: Allows rolling back a player's rank
+    default: op
+  
+  frizzlenperms.rank.list:
+    description: Allows listing all ranks
+    default: op
+  
+  frizzlenperms.rank.info:
+    description: Allows viewing rank information
+    default: op
+  
+  frizzlenperms.permission.*:
+    description: Gives access to all permission commands
+    default: op
+    children:
+      frizzlenperms.permission.add: true
+      frizzlenperms.permission.remove: true
+      frizzlenperms.permission.list: true
+      frizzlenperms.permission.audit: true
+      frizzlenperms.permission.expire: true
+  
+  frizzlenperms.permission.add:
+    description: Allows adding permissions to players or ranks
+    default: op
+  
+  frizzlenperms.permission.remove:
+    description: Allows removing permissions from players or ranks
+    default: op
+  
+  frizzlenperms.permission.list:
+    description: Allows listing permissions for players or ranks
+    default: op
+  
+  frizzlenperms.permission.audit:
+    description: Allows viewing permission change logs
+    default: op
+  
+  frizzlenperms.permission.expire:
+    description: Allows setting expiration times for permissions
+    default: op
+  
+  frizzlenperms.discord.*:
+    description: Gives access to all Discord commands
+    default: op
+    children:
+      frizzlenperms.discord.sync: true
+      frizzlenperms.discord.link: true
+      frizzlenperms.discord.unlink: true
+  
+  frizzlenperms.discord.sync:
+    description: Allows syncing a player's rank with Discord
+    default: op
+  
+  frizzlenperms.discord.link:
+    description: Allows linking a player's Discord account
+    default: true
+  
+  frizzlenperms.discord.unlink:
+    description: Allows unlinking a player's Discord account
+    default: true
+  
+  frizzlenperms.audit.*:
+    description: Gives access to all audit commands
+    default: op
+    children:
+      frizzlenperms.audit.view: true
+      frizzlenperms.audit.clear: true
+  
+  frizzlenperms.audit.view:
+    description: Allows viewing audit logs
+    default: op
+  
+  frizzlenperms.audit.clear:
+    description: Allows clearing audit logs
+    default: op
+  
+  frizzlenperms.gui:
+    description: Allows opening the GUI
+    default: op
+  
+  frizzlenperms.reload:
+    description: Allows reloading the plugin
+    default: op
