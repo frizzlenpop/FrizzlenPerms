@@ -98,17 +98,19 @@ public class RankSetPrefixCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_PREFIX",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Set prefix of rank " + rank.getName() + " from '" + oldPrefix + "' to '" + prefix + "'",
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_PREFIX",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
                         rank.getName(),
-                        "CONSOLE",
                         "Set prefix of rank " + rank.getName() + " from '" + oldPrefix + "' to '" + prefix + "'",
                         plugin.getConfigManager().getServerName()
                     );

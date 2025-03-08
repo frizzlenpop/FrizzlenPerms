@@ -407,4 +407,56 @@ public class PermissionManager {
             }
         }
     }
+
+    /**
+     * Updates the suffix for a player based on their ranks.
+     *
+     * @param player The player to update the suffix for
+     */
+    public void updatePlayerSuffix(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        PlayerData playerData = dataManager.getPlayerData(player.getUniqueId());
+        if (playerData == null) {
+            return;
+        }
+
+        // Get primary rank suffix
+        String suffix = "";
+        Rank primaryRank = plugin.getRankManager().getRank(playerData.getPrimaryRank());
+        if (primaryRank != null && primaryRank.getSuffix() != null) {
+            suffix = primaryRank.getSuffix();
+        }
+
+        // Apply suffix using chat plugin hook
+        plugin.getChatManager().setPlayerSuffix(player, suffix);
+    }
+
+    /**
+     * Updates the display name for a player based on their ranks.
+     *
+     * @param player The player to update the display name for
+     */
+    public void updateDisplayName(Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+
+        PlayerData playerData = dataManager.getPlayerData(player.getUniqueId());
+        if (playerData == null) {
+            return;
+        }
+
+        // Get primary rank display name
+        String displayName = player.getName();
+        Rank primaryRank = plugin.getRankManager().getRank(playerData.getPrimaryRank());
+        if (primaryRank != null && primaryRank.getDisplayName() != null) {
+            displayName = primaryRank.getDisplayName().replace("%player%", player.getName());
+        }
+
+        // Set player's display name
+        player.setDisplayName(displayName);
+    }
 } 

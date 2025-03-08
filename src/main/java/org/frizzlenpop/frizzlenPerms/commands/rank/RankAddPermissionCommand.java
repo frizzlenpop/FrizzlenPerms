@@ -98,17 +98,19 @@ public class RankAddPermissionCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_PERMISSION_ADD",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.PERMISSION_ADD,
+                        rank.getName(),
                         "Added permission " + permission + " with value " + value + " to rank " + rank.getName(),
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_PERMISSION_ADD",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.PERMISSION_ADD,
                         rank.getName(),
-                        "CONSOLE",
                         "Added permission " + permission + " with value " + value + " to rank " + rank.getName(),
                         plugin.getConfigManager().getServerName()
                     );

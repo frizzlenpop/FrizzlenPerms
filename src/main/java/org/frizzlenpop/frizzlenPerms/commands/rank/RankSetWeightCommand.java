@@ -108,17 +108,19 @@ public class RankSetWeightCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_WEIGHT",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Set weight of rank " + rank.getName() + " from " + oldWeight + " to " + weight,
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_WEIGHT",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
                         rank.getName(),
-                        "CONSOLE",
                         "Set weight of rank " + rank.getName() + " from " + oldWeight + " to " + weight,
                         plugin.getConfigManager().getServerName()
                     );

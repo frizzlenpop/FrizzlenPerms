@@ -103,18 +103,20 @@ public class RankSetDefaultCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_DEFAULT",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Set rank " + rank.getName() + " as default, replacing " + 
                             (oldDefaultName.isEmpty() ? "none" : oldDefaultName),
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_DEFAULT",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
                         rank.getName(),
-                        "CONSOLE",
                         "Set rank " + rank.getName() + " as default, replacing " +
                             (oldDefaultName.isEmpty() ? "none" : oldDefaultName),
                         plugin.getConfigManager().getServerName()

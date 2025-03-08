@@ -107,17 +107,19 @@ public class RankSetDisplayNameCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_DISPLAY_NAME",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Set display name of rank " + rank.getName() + " from '" + oldDisplayName + "' to '" + displayName + "'",
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_DISPLAY_NAME",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
                         rank.getName(),
-                        "CONSOLE",
                         "Set display name of rank " + rank.getName() + " from '" + oldDisplayName + "' to '" + displayName + "'",
                         plugin.getConfigManager().getServerName()
                     );

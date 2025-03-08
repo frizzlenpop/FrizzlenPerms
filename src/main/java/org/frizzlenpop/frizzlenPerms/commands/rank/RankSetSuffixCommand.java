@@ -98,17 +98,19 @@ public class RankSetSuffixCommand implements SubCommand {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_SUFFIX",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Set suffix of rank " + rank.getName() + " from '" + oldSuffix + "' to '" + suffix + "'",
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_SET_SUFFIX",
+                        null,
+                        "Console",
+                        org.frizzlenpop.frizzlenPerms.models.AuditLog.ActionType.RANK_MODIFY,
                         rank.getName(),
-                        "CONSOLE",
                         "Set suffix of rank " + rank.getName() + " from '" + oldSuffix + "' to '" + suffix + "'",
                         plugin.getConfigManager().getServerName()
                     );
