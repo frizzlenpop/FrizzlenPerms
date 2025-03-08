@@ -9,7 +9,6 @@ import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Command to push permissions data to other servers.

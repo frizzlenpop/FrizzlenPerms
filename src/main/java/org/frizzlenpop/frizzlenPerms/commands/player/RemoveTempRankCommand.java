@@ -157,7 +157,7 @@ public class RemoveTempRankCommand implements SubCommand {
                 
                 // Send success message
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "admin.temp-rank-removed", Map.of(
+                    MessageUtils.sendMessage(sender, "players.temp-rank-removed", Map.of(
                         "player", playerName,
                         "rank", rank.getDisplayName()
                     ));

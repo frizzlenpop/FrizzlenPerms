@@ -10,7 +10,6 @@ import org.frizzlenpop.frizzlenPerms.models.Rank;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Command to list permissions for a player or rank.

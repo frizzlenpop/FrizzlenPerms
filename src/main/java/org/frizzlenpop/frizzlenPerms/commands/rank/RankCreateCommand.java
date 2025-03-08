@@ -1,6 +1,5 @@
 package org.frizzlenpop.frizzlenPerms.commands.rank;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;

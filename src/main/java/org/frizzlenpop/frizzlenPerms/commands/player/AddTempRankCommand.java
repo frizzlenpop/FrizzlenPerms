@@ -162,7 +162,7 @@ public class AddTempRankCommand implements SubCommand {
                 
                 // Send success message
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "admin.temp-rank-added", Map.of(
+                    MessageUtils.sendMessage(sender, "players.temp-rank-added", Map.of(
                         "player", playerName,
                         "rank", rank.getDisplayName(),
                         "duration", TimeUtils.formatDuration(duration)

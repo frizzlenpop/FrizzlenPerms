@@ -130,14 +130,14 @@ public class RemoveRankCommand implements SubCommand {
             );
             
             // Send success message
-            MessageUtils.sendMessage(sender, "admin.removerank-success", Map.of(
+            MessageUtils.sendMessage(sender, "players.remove-rank-success", Map.of(
                 "player", playerName,
                 "rank", rank.getDisplayName()
             ));
             
             // Send notification to player if online
             if (player != null && player.isOnline() && !player.equals(sender)) {
-                MessageUtils.sendMessage(player, "player.rank-removed", Map.of(
+                MessageUtils.sendMessage(player, "players.rank-removed", Map.of(
                     "rank", rank.getDisplayName()
                 ));
             }
