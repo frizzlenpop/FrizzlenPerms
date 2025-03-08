@@ -398,7 +398,7 @@ public class ConfigManager {
      * @return The default rank name
      */
     public String getDefaultRankName() {
-        return config.getString("ranks.default-rank", "default");
+        return config.getString("ranks.default", "default");
     }
     
     /**
@@ -407,7 +407,7 @@ public class ConfigManager {
      * @return The admin rank name
      */
     public String getAdminRankName() {
-        return config.getString("ranks.admin-rank", "admin");
+        return config.getString("ranks.admin", "admin");
     }
     
     /**
@@ -434,7 +434,7 @@ public class ConfigManager {
      * @return The server name
      */
     public String getServerName() {
-        return config.getString("server.name", "Main");
+        return config.getString("server-name", "default");
     }
     
     /**
@@ -452,7 +452,7 @@ public class ConfigManager {
      * @return True if logging is enabled
      */
     public boolean isLoggingEnabled() {
-        return config.getBoolean("audit.enabled", true);
+        return config.getBoolean("logging.enabled", true);
     }
     
     /**
@@ -461,7 +461,7 @@ public class ConfigManager {
      * @return True if logging should be saved to a file
      */
     public boolean isLoggingSavedToFile() {
-        return config.getBoolean("audit.file-logging", true);
+        return config.getBoolean("logging.save-to-file", true);
     }
     
     /**
@@ -470,18 +470,18 @@ public class ConfigManager {
      * @return The maximum number of log entries
      */
     public int getMaxLogEntries() {
-        return config.getInt("audit.max-logs", 1000);
+        return config.getInt("logging.max-entries", 1000);
     }
     
     /**
      * Gets a string value from the config.
      *
      * @param path The path to the value
-     * @param defaultValue The default value if not found
+     * @param def The default value
      * @return The string value
      */
-    public String getString(String path, String defaultValue) {
-        return config.getString(path, defaultValue);
+    public String getString(String path, String def) {
+        return config.getString(path, def);
     }
 
     /**

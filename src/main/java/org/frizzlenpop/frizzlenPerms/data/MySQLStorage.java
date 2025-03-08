@@ -774,6 +774,7 @@ public class MySQLStorage implements StorageProvider {
     }
 
     private AuditLog loadAuditLogFromResultSet(ResultSet rs) throws SQLException {
+        UUID id = UUID.fromString(rs.getString("id"));
         long timestamp = rs.getLong("timestamp");
         String type = rs.getString("type");
         UUID actorUuid = rs.getString("actor_uuid") != null ? UUID.fromString(rs.getString("actor_uuid")) : null;
@@ -783,14 +784,15 @@ public class MySQLStorage implements StorageProvider {
         String server = rs.getString("server");
         
         return new AuditLog(
-            UUID.randomUUID(),
+            id,
             actorUuid,
             actorName,
             timestamp,
             AuditLog.ActionType.fromDisplayName(type),
             actionData,
             server,
-            targetUuid
+            targetUuid,
+            null // No Discord ID in this context
         );
     }
 

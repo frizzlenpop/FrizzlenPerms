@@ -167,7 +167,7 @@ public class RemoveTempRankCommand implements SubCommand {
                 e.printStackTrace();
                 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "error.internal-error", Map.of(
+                    MessageUtils.sendMessage(sender, "error.remove-rank-failed", Map.of(
                         "error", e.getMessage()
                     ));
                 });

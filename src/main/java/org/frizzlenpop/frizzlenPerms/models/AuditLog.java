@@ -217,29 +217,16 @@ public class AuditLog {
      */
     public String format() {
         StringBuilder sb = new StringBuilder();
-        sb.append(actionType.getDisplayName())
-          .append(" by ")
-          .append(actorName)
-          .append(" (")
-          .append(actorUuid != null ? actorUuid.toString() : "Console")
-          .append(")");
-
+        sb.append("[").append(actionType.getDisplayName()).append("] ");
+        sb.append("Actor: ").append(actorName);
         if (targetPlayerId != null) {
-            sb.append(" on player ")
-              .append(targetPlayerId);
+            sb.append(", Target: ").append(targetPlayerId);
         }
-
         if (targetDiscordId != null) {
-            sb.append(" on Discord user ")
-              .append(targetDiscordId);
+            sb.append(", Discord: ").append(targetDiscordId);
         }
-
-        sb.append(" - ")
-          .append(details)
-          .append(" [")
-          .append(server)
-          .append("]");
-
+        sb.append(", Details: ").append(details);
+        sb.append(", Server: ").append(server);
         return sb.toString();
     }
     
@@ -296,7 +283,7 @@ public class AuditLog {
                     return type;
                 }
             }
-            return null;
+            throw new IllegalArgumentException("No action type with display name: " + displayName);
         }
     }
 } 

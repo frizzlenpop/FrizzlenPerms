@@ -215,3 +215,25 @@ help:
   header: "&6=== &eFrizzlenPerms Help (%page%/%total%) &6==="
   command: "&e/%command% &7- &f%description%"
   footer: "&6=== &eUse /fp help [page] for more &6=== 
+
+# Error messages
+error:
+  not-enough-args: "&cNot enough arguments. Usage: %usage%"
+  missing-arguments: "&cMissing arguments. Usage: %usage%"
+  invalid-arguments: "&cInvalid arguments. Usage: %usage%"
+  rank-not-found: "&cRank &f%rank% &cnot found."
+  player-not-found: "&cPlayer &f%player% &cnot found."
+  rank-permission-already-exists: "&cRank &f%rank% &calready has permission &f%permission% &cwith value &f%value%"
+  rank-already-inherits: "&cRank &f%rank% &calready inherits from &f%parent%"
+  rank-inherit-self: "&cRank &f%rank% &ccannot inherit from itself"
+  circular-inheritance: "&cCannot add inheritance from &f%parent% &cto &f%rank% &cas it would create a circular inheritance"
+  rank-already-default: "&cRank &f%rank% &cis already the default rank"
+  rank-weight-already-set: "&cRank &f%rank% &calready has weight &f%weight%"
+  invalid-number: "&cInvalid number: &f%input%"
+  database-error: "&cDatabase error: %error%"
+  internal-error: "&cInternal error: %error%"
+  add-rank-failed: "&cFailed to add rank: %error%"
+  remove-rank-failed: "&cFailed to remove rank: %error%"
+  set-rank-failed: "&cFailed to set rank: %error%"
+  add-perm-failed: "&cFailed to add permission: %error%"
+  remove-perm-failed: "&cFailed to remove permission: %error%" 

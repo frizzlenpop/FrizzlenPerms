@@ -119,6 +119,8 @@ public class RankManager {
         if (getRank(name) == null) {
             Rank rank = new Rank(name, displayName, prefix, "", "§f", weight, null);
             dataManager.saveRank(rank);
+            rankCache.put(name.toLowerCase(), rank);
+            plugin.getLogger().info("Created rank: " + name);
         }
     }
     
@@ -402,103 +404,88 @@ public class RankManager {
      * @param displayName The display name of the rank
      * @param prefix The prefix of the rank
      * @param weight The weight of the rank
-     * @param actor The player creating the rank, or null for console
-     * @return The created rank, or null if the operation failed
+     * @param actor The player creating the rank
+     * @return The created rank
      */
     public Rank createRank(String name, String displayName, String prefix, int weight, Player actor) {
-        if (name == null || name.isEmpty()) {
-            return null;
+        synchronized (rankLock) {
+            // Check if rank already exists
+            if (getRank(name) != null) {
+                return null;
+            }
+
+            // Create new rank
+            Rank rank = new Rank(name, displayName, prefix, "", "§f", weight, null);
+            dataManager.saveRank(rank);
+            rankCache.put(name.toLowerCase(), rank);
+
+            // Log action
+            auditManager.logAction(
+                actor != null ? actor.getUniqueId() : null,
+                actor != null ? actor.getName() : "Console",
+                AuditLog.ActionType.RANK_CREATE,
+                name,
+                "Created rank " + name + " with weight " + weight,
+                configManager.getServerName()
+            );
+
+            return rank;
         }
-        
-        // Check if rank already exists
-        if (getRank(name) != null) {
-            return null;
-        }
-        
-        // Create the rank
-        Rank rank = new Rank(name, displayName, prefix, "", "§f", weight, null);
-        
-        // Save the rank
-        dataManager.saveRank(rank);
-        
-        // Log the action
-        auditManager.logAction(
-            actor != null ? actor.getUniqueId() : null,
-            actor != null ? actor.getName() : "Console",
-            AuditLog.ActionType.RANK_CREATE,
-            name,
-            "Created rank with display name " + displayName + ", prefix " + prefix + ", and weight " + weight,
-            configManager.getServerName()
-        );
-        
-        return rank;
     }
     
     /**
-     * Creates a new rank using a Rank object.
+     * Creates a rank from a rank object.
      *
-     * @param rank The rank to create
-     * @return Whether the operation was successful
+     * @param rank The rank object
+     * @return True if successful
      */
     public boolean createRankFromObject(Rank rank) {
         if (rank == null) {
             return false;
         }
-        
-        // Check if rank already exists
-        if (dataManager.getRank(rank.getName()) != null) {
-            plugin.getLogger().warning("Rank already exists: " + rank.getName());
-            return false;
+
+        synchronized (rankLock) {
+            // Check if rank already exists
+            if (getRank(rank.getName()) != null) {
+                return false;
+            }
+
+            // Save rank
+            dataManager.saveRank(rank);
+            rankCache.put(rank.getName().toLowerCase(), rank);
+
+            return true;
         }
-        
-        // Save the rank
-        dataManager.saveRank(rank);
-        
-        // Log the action
-        auditManager.logAction(
-            null,
-            "Console",
-            AuditLog.ActionType.RANK_CREATE,
-            rank.getName(),
-            "Created rank with display name " + rank.getDisplayName() + ", prefix " + rank.getPrefix() + 
-            ", and weight " + rank.getWeight(),
-            configManager.getServerName()
-        );
-        
-        return true;
     }
     
     /**
      * Deletes a rank.
      *
-     * @param name The name of the rank to delete
-     * @param actor The player deleting the rank, or null for console
-     * @return Whether the operation was successful
+     * @param name The name of the rank
+     * @param actor The player deleting the rank
+     * @return True if successful
      */
     public boolean deleteRank(String name, Player actor) {
-        if (name == null || name.isEmpty()) {
-            return false;
-        }
+        synchronized (rankLock) {
+            // Check if rank exists
+            Rank rank = getRank(name);
+            if (rank == null) {
+                return false;
+            }
 
-        // Check if rank exists
-        Rank rank = getRank(name);
-        if (rank == null) {
-            return false;
-        }
+            // Check if rank is default
+            if (rank.isDefault()) {
+                return false;
+            }
 
-        // Check if it's the default rank
-        if (rank.isDefault()) {
-            return false;
-        }
-        
-        // Delete the rank
-        try {
+            // Delete rank
             dataManager.deleteRank(name);
-            
-            // Update players who had this rank
+            rankCache.remove(name.toLowerCase());
+
+            // Update players
             updatePlayersAfterRankDeletion(name);
-            
-            // Log the action
+
+            // Log action
             auditManager.logAction(
                 actor != null ? actor.getUniqueId() : null,
                 actor != null ? actor.getName() : "Console",
@@ -507,11 +494,8 @@ public class RankManager {
                 "Deleted rank " + name,
                 configManager.getServerName()
             );
-            
+
             return true;
-        } catch (Exception e) {
-            plugin.getLogger().severe("Failed to delete rank: " + name);
-            return false;
         }
     }
     
@@ -521,84 +505,70 @@ public class RankManager {
      * @param rankName The name of the deleted rank
      */
     private void updatePlayersAfterRankDeletion(String rankName) {
-        // Get all players
-        List<PlayerData> allPlayers = dataManager.getAllPlayerData();
-        
-        for (PlayerData playerData : allPlayers) {
-            boolean changed = false;
-            
-            // Check primary rank
-            if (rankName.equals(playerData.getPrimaryRank())) {
-                playerData.setPrimaryRank(defaultRankName);
-                changed = true;
-            }
-            
-            // Check secondary ranks
-            if (playerData.getSecondaryRanks().contains(rankName)) {
-                playerData.removeSecondaryRank(rankName);
-                changed = true;
-            }
-            
-            // Check temporary ranks
-            if (playerData.isTemporaryRank(rankName)) {
-                playerData.removeTemporaryRank(rankName);
-                changed = true;
-            }
-            
-            // Save if changed
-            if (changed) {
-                dataManager.savePlayerData(playerData);
-                
-                // Update permissions if online
-                Player player = plugin.getServer().getPlayer(playerData.getUuid());
-                if (player != null && player.isOnline()) {
+        plugin.getServer().getOnlinePlayers().forEach(player -> {
+            PlayerData playerData = plugin.getDataManager().getPlayerData(player.getUniqueId());
+            if (playerData != null) {
+                boolean updated = false;
+
+                // Check primary rank
+                if (rankName.equals(playerData.getPrimaryRank())) {
+                    playerData.setPrimaryRank(defaultRankName);
+                    updated = true;
+                }
+
+                // Check secondary ranks
+                if (playerData.getSecondaryRanks().remove(rankName)) {
+                    updated = true;
+                }
+
+                // Save if updated
+                if (updated) {
+                    plugin.getDataManager().savePlayerData(playerData);
                     permissionManager.calculateAndApplyPermissions(player);
                 }
             }
-        }
+        });
     }
     
     /**
      * Sets the default rank.
      *
-     * @param name The name of the rank to set as default
-     * @param actor The player setting the default rank, or null for console
-     * @return Whether the operation was successful
+     * @param name The name of the rank
+     * @param actor The player setting the default rank
+     * @return True if successful
      */
     public boolean setDefaultRank(String name, Player actor) {
-        // Check if rank exists
-        Rank rank = dataManager.getRank(name);
-        if (rank == null) {
-            plugin.getLogger().warning("Rank not found: " + name);
-            return false;
+        synchronized (rankLock) {
+            // Check if rank exists
+            Rank rank = getRank(name);
+            if (rank == null) {
+                return false;
+            }
+
+            // Get current default rank
+            Rank currentDefault = getDefaultRank();
+            if (currentDefault != null) {
+                currentDefault.setDefault(false);
+                dataManager.saveRank(currentDefault);
+            }
+
+            // Set new default rank
+            rank.setDefault(true);
+            dataManager.saveRank(rank);
+            defaultRankName = name;
+
+            // Log action
+            auditManager.logAction(
+                actor != null ? actor.getUniqueId() : null,
+                actor != null ? actor.getName() : "Console",
+                AuditLog.ActionType.RANK_MODIFY,
+                name,
+                "Set as default rank",
+                configManager.getServerName()
+            );
+
+            return true;
         }
-        
-        // Get current default rank
-        Rank currentDefault = dataManager.getRank(defaultRankName);
-        if (currentDefault != null) {
-            currentDefault.setDefault(false);
-            dataManager.saveRank(currentDefault);
-        }
-        
-        // Set new default rank
-        rank.setDefault(true);
-        dataManager.saveRank(rank);
-        defaultRankName = name;
-        
-        // Update config
-        configManager.set("ranks.default", name);
-        
-        // Log the action
-        auditManager.logAction(
-            actor != null ? actor.getUniqueId() : null,
-            actor != null ? actor.getName() : "Console",
-            AuditLog.ActionType.RANK_MODIFY,
-            name,
-            "Set as default rank",
-            configManager.getServerName()
-        );
-        
-        return true;
     }
     
     /**
@@ -606,40 +576,38 @@ public class RankManager {
      *
      * @param rankName The name of the rank
      * @param permission The permission to add
-     * @param actor The player adding the permission, or null for console
-     * @return Whether the operation was successful
+     * @param actor The player adding the permission
+     * @return True if successful
      */
     public boolean addRankPermission(String rankName, String permission, Player actor) {
-        // Check if rank exists
-        Rank rank = dataManager.getRank(rankName);
-        if (rank == null) {
-            plugin.getLogger().warning("Rank not found: " + rankName);
-            return false;
+        synchronized (rankLock) {
+            // Check if rank exists
+            Rank rank = getRank(rankName);
+            if (rank == null) {
+                return false;
+            }
+
+            // Add permission
+            if (!rank.hasPermission(permission)) {
+                rank.addPermission(permission);
+                dataManager.saveRank(rank);
+
+                // Update online players with this rank
+                updatePlayersAfterRankChange(rankName);
+
+                // Log action
+                auditManager.logAction(
+                    actor != null ? actor.getUniqueId() : null,
+                    actor != null ? actor.getName() : "Console",
+                    AuditLog.ActionType.RANK_MODIFY,
+                    rankName,
+                    "Added permission: " + permission,
+                    configManager.getServerName()
+                );
+            }
+
+            return true;
         }
-        
-        // Add the permission
-        if (rank.hasPermission(permission)) {
-            plugin.getLogger().warning("Rank " + rankName + " already has permission: " + permission);
-            return false;
-        }
-        
-        rank.addPermission(permission);
-        dataManager.saveRank(rank);
-        
-        // Log the action
-        auditManager.logAction(
-            actor != null ? actor.getUniqueId() : null,
-            actor != null ? actor.getName() : "Console",
-            AuditLog.ActionType.RANK_MODIFY,
-            rankName,
-            "Added permission " + permission,
-            configManager.getServerName()
-        );
-        
-        // Update players with this rank
-        updatePlayersAfterRankChange(rankName);
-        
-        return true;
     }
     
     /**
@@ -647,63 +615,53 @@ public class RankManager {
      *
      * @param rankName The name of the rank
      * @param permission The permission to remove
-     * @param actor The player removing the permission, or null for console
-     * @return Whether the operation was successful
+     * @param actor The player removing the permission
+     * @return True if successful
      */
     public boolean removeRankPermission(String rankName, String permission, Player actor) {
-        // Check if rank exists
-        Rank rank = dataManager.getRank(rankName);
-        if (rank == null) {
-            plugin.getLogger().warning("Rank not found: " + rankName);
-            return false;
+        synchronized (rankLock) {
+            // Check if rank exists
+            Rank rank = getRank(rankName);
+            if (rank == null) {
+                return false;
+            }
+
+            // Remove permission
+            if (rank.hasPermission(permission)) {
+                rank.removePermission(permission);
+                dataManager.saveRank(rank);
+
+                // Update online players with this rank
+                updatePlayersAfterRankChange(rankName);
+
+                // Log action
+                auditManager.logAction(
+                    actor != null ? actor.getUniqueId() : null,
+                    actor != null ? actor.getName() : "Console",
+                    AuditLog.ActionType.RANK_MODIFY,
+                    rankName,
+                    "Removed permission: " + permission,
+                    configManager.getServerName()
+                );
+            }
+
+            return true;
         }
-        
-        // Remove the permission
-        if (!rank.hasPermission(permission)) {
-            plugin.getLogger().warning("Rank " + rankName + " does not have permission: " + permission);
-            return false;
-        }
-        
-        rank.removePermission(permission);
-        dataManager.saveRank(rank);
-        
-        // Log the action
-        auditManager.logAction(
-            actor != null ? actor.getUniqueId() : null,
-            actor != null ? actor.getName() : "Console",
-            AuditLog.ActionType.RANK_MODIFY,
-            rankName,
-            "Removed permission " + permission,
-            configManager.getServerName()
-        );
-        
-        // Update players with this rank
-        updatePlayersAfterRankChange(rankName);
-        
-        return true;
     }
     
     /**
-     * Updates players after a rank is changed.
+     * Updates online players after a rank change.
      *
      * @param rankName The name of the changed rank
      */
     private void updatePlayersAfterRankChange(String rankName) {
-        // Get all players
-        List<PlayerData> allPlayers = dataManager.getAllPlayerData();
-        
-        for (PlayerData playerData : allPlayers) {
-            boolean hasRank = rankName.equals(playerData.getPrimaryRank()) || 
-                            playerData.getSecondaryRanks().contains(rankName);
-            
-            // Update permissions if online and has the rank
-            if (hasRank) {
-                Player player = plugin.getServer().getPlayer(playerData.getUuid());
-                if (player != null && player.isOnline()) {
-                    permissionManager.calculateAndApplyPermissions(player);
-                }
+        plugin.getServer().getOnlinePlayers().forEach(player -> {
+            PlayerData playerData = plugin.getDataManager().getPlayerData(player.getUniqueId());
+            if (playerData != null && (rankName.equals(playerData.getPrimaryRank()) || 
+                                     playerData.getSecondaryRanks().contains(rankName))) {
+                permissionManager.calculateAndApplyPermissions(player);
             }
-        }
+        });
     }
     
     /**

@@ -13,13 +13,21 @@ public class TimeUtils {
     
     /**
      * Parses a time string in the format "1d2h3m4s" to milliseconds.
+     * Also accepts "permanent", "forever", or "perm" to indicate a permanent duration.
+     * If the string is a plain number, it is interpreted as seconds.
      *
      * @param timeString The time string to parse
-     * @return The time in milliseconds, or -1 if the string is invalid
+     * @param allowZero Whether to allow zero duration
+     * @param defaultValue The value to return if parsing fails (use null to throw exceptions)
+     * @return The time in milliseconds, or defaultValue if parsing fails and defaultValue is not null
+     * @throws IllegalArgumentException if parsing fails and defaultValue is null
      */
-    public static long parseTime(String timeString) {
+    public static Long parseTime(String timeString, boolean allowZero, Long defaultValue) {
         if (timeString == null || timeString.isEmpty()) {
-            return -1;
+            if (defaultValue != null) {
+                return defaultValue;
+            }
+            throw new IllegalArgumentException("Time string cannot be empty");
         }
         
         // Handle "permanent" or "forever" cases
@@ -31,95 +39,118 @@ public class TimeUtils {
         
         // Try to parse as a number (seconds)
         try {
-            return TimeUnit.SECONDS.toMillis(Long.parseLong(timeString));
+            long millis = TimeUnit.SECONDS.toMillis(Long.parseLong(timeString));
+            if (millis < 0 || (!allowZero && millis == 0)) {
+                if (defaultValue != null) {
+                    return defaultValue;
+                }
+                throw new IllegalArgumentException("Duration must be " + (allowZero ? "non-negative" : "positive"));
+            }
+            return millis;
         } catch (NumberFormatException ignored) {
             // Not a simple number, continue with pattern matching
         }
         
         // Parse using the pattern
         Matcher matcher = TIME_PATTERN.matcher(timeString.toLowerCase());
-        if (matcher.matches()) {
-            long totalMillis = 0;
-            
-            String days = matcher.group(1);
-            if (days != null && !days.isEmpty()) {
-                totalMillis += TimeUnit.DAYS.toMillis(Long.parseLong(days));
+        if (!matcher.matches()) {
+            if (defaultValue != null) {
+                return defaultValue;
             }
-            
-            String hours = matcher.group(2);
-            if (hours != null && !hours.isEmpty()) {
-                totalMillis += TimeUnit.HOURS.toMillis(Long.parseLong(hours));
-            }
-            
-            String minutes = matcher.group(3);
-            if (minutes != null && !minutes.isEmpty()) {
-                totalMillis += TimeUnit.MINUTES.toMillis(Long.parseLong(minutes));
-            }
-            
-            String seconds = matcher.group(4);
-            if (seconds != null && !seconds.isEmpty()) {
-                totalMillis += TimeUnit.SECONDS.toMillis(Long.parseLong(seconds));
-            }
-            
-            return totalMillis > 0 ? totalMillis : -1;
+            throw new IllegalArgumentException("Invalid duration format: " + timeString);
         }
         
-        return -1; // Invalid format
+        long totalMillis = 0;
+        
+        String days = matcher.group(1);
+        if (days != null && !days.isEmpty()) {
+            totalMillis += TimeUnit.DAYS.toMillis(Long.parseLong(days));
+        }
+        
+        String hours = matcher.group(2);
+        if (hours != null && !hours.isEmpty()) {
+            totalMillis += TimeUnit.HOURS.toMillis(Long.parseLong(hours));
+        }
+        
+        String minutes = matcher.group(3);
+        if (minutes != null && !minutes.isEmpty()) {
+            totalMillis += TimeUnit.MINUTES.toMillis(Long.parseLong(minutes));
+        }
+        
+        String seconds = matcher.group(4);
+        if (seconds != null && !seconds.isEmpty()) {
+            totalMillis += TimeUnit.SECONDS.toMillis(Long.parseLong(seconds));
+        }
+        
+        if (!allowZero && totalMillis == 0) {
+            if (defaultValue != null) {
+                return defaultValue;
+            }
+            throw new IllegalArgumentException("Duration must be greater than 0");
+        }
+        
+        return totalMillis;
+    }
+    
+    /**
+     * Parses a time string in the format "1d2h3m4s" to milliseconds.
+     * Returns -1 if the string is invalid.
+     * This is a legacy method that uses parseTime with default values.
+     *
+     * @param timeString The time string to parse
+     * @return The time in milliseconds, or -1 if invalid
+     */
+    public static long parseTime(String timeString) {
+        return parseTime(timeString, false, -1L);
+    }
+    
+    /**
+     * Parses a duration string into milliseconds.
+     * This method throws exceptions for invalid input.
+     * This is a legacy method that uses parseTime with strict validation.
+     *
+     * @param durationStr The duration string (e.g., "1d2h3m4s")
+     * @return The duration in milliseconds
+     * @throws IllegalArgumentException if the duration string is invalid
+     */
+    public static long parseDuration(String durationStr) {
+        return parseTime(durationStr, false, null);
     }
     
     /**
      * Formats a duration in milliseconds to a human-readable string.
      *
-     * @param durationMillis The duration in milliseconds
+     * @param millis The duration in milliseconds
      * @return The formatted duration string
      */
-    public static String formatDuration(long durationMillis) {
-        if (durationMillis <= 0) {
-            return "0 seconds";
+    public static String formatDuration(long millis) {
+        if (millis == Long.MAX_VALUE) {
+            return "Permanent";
         }
-        
-        if (durationMillis == Long.MAX_VALUE) {
-            return "permanent";
+
+        if (millis <= 0) {
+            return "0s";
         }
-        
-        long days = TimeUnit.MILLISECONDS.toDays(durationMillis);
-        durationMillis -= TimeUnit.DAYS.toMillis(days);
-        
-        long hours = TimeUnit.MILLISECONDS.toHours(durationMillis);
-        durationMillis -= TimeUnit.HOURS.toMillis(hours);
-        
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(durationMillis);
-        durationMillis -= TimeUnit.MINUTES.toMillis(minutes);
-        
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(durationMillis);
-        
+
         StringBuilder sb = new StringBuilder();
-        
+        long days = TimeUnit.MILLISECONDS.toDays(millis);
+        long hours = TimeUnit.MILLISECONDS.toHours(millis) % 24;
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
+
         if (days > 0) {
-            sb.append(days).append(days == 1 ? " day" : " days");
-            if (hours > 0 || minutes > 0 || seconds > 0) {
-                sb.append(", ");
-            }
+            sb.append(days).append("d");
         }
-        
         if (hours > 0) {
-            sb.append(hours).append(hours == 1 ? " hour" : " hours");
-            if (minutes > 0 || seconds > 0) {
-                sb.append(", ");
-            }
+            sb.append(hours).append("h");
         }
-        
         if (minutes > 0) {
-            sb.append(minutes).append(minutes == 1 ? " minute" : " minutes");
-            if (seconds > 0) {
-                sb.append(", ");
-            }
+            sb.append(minutes).append("m");
         }
-        
-        if (seconds > 0 || (days == 0 && hours == 0 && minutes == 0)) {
-            sb.append(seconds).append(seconds == 1 ? " second" : " seconds");
+        if (seconds > 0 || sb.length() == 0) {
+            sb.append(seconds).append("s");
         }
-        
+
         return sb.toString();
     }
     

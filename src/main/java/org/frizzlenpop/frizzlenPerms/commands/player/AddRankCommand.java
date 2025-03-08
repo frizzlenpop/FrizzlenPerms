@@ -114,7 +114,7 @@ public class AddRankCommand implements SubCommand {
             
             // Update permissions if player is online
             if (player != null && player.isOnline()) {
-                plugin.getPermissionManager().setupPermissions(player);
+                plugin.getPermissionManager().calculateAndApplyPermissions(player);
             }
             
             // Log the action

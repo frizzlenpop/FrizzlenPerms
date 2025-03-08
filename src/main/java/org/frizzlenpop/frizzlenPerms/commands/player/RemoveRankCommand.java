@@ -8,6 +8,7 @@ import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.models.Rank;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
+import org.frizzlenpop.frizzlenPerms.models.AuditLog;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,7 +122,7 @@ public class RemoveRankCommand implements SubCommand {
             plugin.getAuditManager().logAction(
                 actor != null ? actor.getUniqueId() : null,
                 actor != null ? actor.getName() : "Console",
-                "PLAYER_RANK_REMOVE", // Using string instead of enum constant to avoid import errors
+                AuditLog.ActionType.PLAYER_RANK_REMOVE,
                 playerName,
                 "Removed secondary rank " + rank.getName(),
                 plugin.getConfigManager().getServerName() != null ? plugin.getConfigManager().getServerName() : "default",
