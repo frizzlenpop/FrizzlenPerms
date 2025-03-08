@@ -58,8 +58,22 @@ public class RankCreateCommand implements SubCommand {
     
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        // Get rank name
-        String rankName = args[0];
+        if (args.length < 1) {
+            MessageUtils.sendMessage(sender, "error.missing-arguments", Map.of(
+                "usage", getUsage()
+            ));
+            return false;
+        }
+
+        // Get rank name and validate format
+        final String rankName = args[0];
+        if (!rankName.matches("^[a-zA-Z0-9_-]{1,32}$")) {
+            MessageUtils.sendMessage(sender, "rank.invalid-name", Map.of(
+                "rank", rankName,
+                "format", "letters, numbers, underscores, and hyphens (max 32 characters)"
+            ));
+            return false;
+        }
         
         // Check if rank already exists
         if (plugin.getRankManager().getRank(rankName) != null) {
@@ -74,11 +88,24 @@ public class RankCreateCommand implements SubCommand {
         
         if (args.length > 1) {
             displayName = args[1];
+            if (displayName.length() > 48) {
+                MessageUtils.sendMessage(sender, "rank.display-name-too-long", Map.of(
+                    "max", "48"
+                ));
+                return false;
+            }
         }
         
         if (args.length > 2) {
             try {
                 weight = Integer.parseInt(args[2]);
+                if (weight < -999 || weight > 999) {
+                    MessageUtils.sendMessage(sender, "rank.weight-out-of-range", Map.of(
+                        "min", "-999",
+                        "max", "999"
+                    ));
+                    return false;
+                }
             } catch (NumberFormatException e) {
                 MessageUtils.sendMessage(sender, "rank.invalid-weight", Map.of("weight", args[2]));
                 return false;
@@ -94,35 +121,59 @@ public class RankCreateCommand implements SubCommand {
             }
             
             // Check if color is valid
-            try {
-                ChatColor.getByChar(color.charAt(1));
-            } catch (Exception e) {
+            if (color.length() != 2 || !isValidColorCode(color.charAt(1))) {
                 MessageUtils.sendMessage(sender, "rank.invalid-color", Map.of("color", color));
                 return false;
             }
         }
         
+        // Create rank with final variables for async use
+        final String finalDisplayName = displayName;
+        final int finalWeight = weight;
+        final String finalColor = color;
+        
         // Create rank
         Rank rank = new Rank(rankName);
-        rank.setDisplayName(displayName);
-        rank.setWeight(weight);
-        rank.setColor(color);
+        rank.setDisplayName(finalDisplayName);
+        rank.setWeight(finalWeight);
+        rank.setColor(finalColor);
         
-        // Save rank
-        boolean success = plugin.getRankManager().createRankFromObject(rank);
-        
-        if (success) {
-            MessageUtils.sendMessage(sender, "rank.created", Map.of(
-                "rank", rankName,
-                "display", displayName,
-                "weight", String.valueOf(weight),
-                "color", color
-            ));
-        } else {
-            MessageUtils.sendMessage(sender, "rank.create-failed", Map.of("rank", rankName));
-        }
+        // Save rank asynchronously
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                boolean success = plugin.getRankManager().createRankFromObject(rank);
+                
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (success) {
+                        MessageUtils.sendMessage(sender, "rank.created", Map.of(
+                            "rank", rankName,
+                            "display", finalDisplayName,
+                            "weight", String.valueOf(finalWeight),
+                            "color", finalColor
+                        ));
+                    } else {
+                        MessageUtils.sendMessage(sender, "rank.create-failed", Map.of("rank", rankName));
+                    }
+                });
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error creating rank: " + e.getMessage());
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "error.command-error");
+                });
+            }
+        });
         
         return true;
+    }
+    
+    /**
+     * Checks if a character is a valid color code.
+     *
+     * @param c The character to check
+     * @return Whether the character is a valid color code
+     */
+    private boolean isValidColorCode(char c) {
+        return "0123456789AaBbCcDdEeFfKkLlMmNnOoRr".indexOf(c) > -1;
     }
     
     @Override

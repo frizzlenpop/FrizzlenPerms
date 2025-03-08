@@ -62,79 +62,76 @@ public class InfoCommand implements SubCommand {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Get database stats
-                int rankCount = plugin.getRankManager().getAllRanks().size();
+                int rankCount = plugin.getRankManager().getRanks().size();
                 
                 // Count total permissions across all ranks
                 AtomicInteger permissionCount = new AtomicInteger(0);
-                plugin.getRankManager().getAllRanks().forEach(rank -> {
-                    if (rank.getPermissions() != null) {
+                plugin.getRankManager().getRanks().forEach(rank -> {
+                    if (rank != null && rank.getPermissions() != null) {
                         permissionCount.addAndGet(rank.getPermissions().size());
                     }
                 });
                 
-                // Count players with ranks
-                int playerCount = plugin.getDataManager().getPlayerCount();
+                // Count players with data
+                int playerCount = plugin.getDataManager().getAllPlayerData().size();
                 
                 // Get default rank
                 String defaultRankName = "None";
-                for (Rank rank : plugin.getRankManager().getAllRanks()) {
-                    if (rank.isDefault()) {
-                        defaultRankName = rank.getDisplayName();
+                for (Rank rank : plugin.getRankManager().getRanks()) {
+                    if (rank != null && rank.isDefault()) {
+                        defaultRankName = rank.getDisplayName() != null ? rank.getDisplayName() : rank.getName();
                         break;
                     }
                 }
                 
                 // Get the storage type
                 String storageType = plugin.getConfigManager().getStorageType();
+                if (storageType == null || storageType.isEmpty()) {
+                    storageType = "Unknown";
+                }
                 
                 // Is sync enabled
                 boolean syncEnabled = plugin.getConfigManager().isSyncEnabled();
                 
                 // Send results to player
+                final String finalDefaultRankName = defaultRankName;
+                final String finalStorageType = storageType;
+                
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    // Header
-                    MessageUtils.sendMessage(sender, "admin.info-header");
-                    
-                    // Database stats
-                    MessageUtils.sendMessage(sender, "admin.info-ranks", Map.of(
-                        "count", String.valueOf(rankCount)
-                    ));
-                    
-                    MessageUtils.sendMessage(sender, "admin.info-permissions", Map.of(
-                        "count", String.valueOf(permissionCount.get())
-                    ));
-                    
-                    MessageUtils.sendMessage(sender, "admin.info-players", Map.of(
-                        "count", String.valueOf(playerCount)
-                    ));
-                    
-                    // Default rank
-                    MessageUtils.sendMessage(sender, "admin.info-default-rank", Map.of(
-                        "rank", defaultRankName
-                    ));
-                    
-                    // Storage information
-                    MessageUtils.sendMessage(sender, "admin.info-storage", Map.of(
-                        "type", storageType
-                    ));
-                    
-                    // Sync status
-                    MessageUtils.sendMessage(sender, "admin.info-sync", Map.of(
-                        "enabled", syncEnabled ? "Enabled" : "Disabled"
-                    ));
-                    
-                    // Footer
-                    MessageUtils.sendMessage(sender, "admin.info-footer");
+                    try {
+                        // Header
+                        MessageUtils.sendMessage(sender, "admin.info-header");
+                        
+                        // Database stats
+                        MessageUtils.sendMessage(sender, "admin.info-ranks", Map.of(
+                            "count", String.valueOf(rankCount),
+                            "permissions", String.valueOf(permissionCount.get())
+                        ));
+                        
+                        // Player stats
+                        MessageUtils.sendMessage(sender, "admin.info-players", Map.of(
+                            "count", String.valueOf(playerCount)
+                        ));
+                        
+                        // Default rank
+                        MessageUtils.sendMessage(sender, "admin.info-default-rank", Map.of(
+                            "rank", finalDefaultRankName
+                        ));
+                        
+                        // Storage info
+                        MessageUtils.sendMessage(sender, "admin.info-storage", Map.of(
+                            "type", finalStorageType,
+                            "sync", syncEnabled ? "Enabled" : "Disabled"
+                        ));
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("Error sending info messages: " + e.getMessage());
+                        MessageUtils.sendMessage(sender, "error.command-error");
+                    }
                 });
-                
             } catch (Exception e) {
-                plugin.getLogger().severe("Error getting permissions info: " + e.getMessage());
-                e.printStackTrace();
-                
+                plugin.getLogger().severe("Error gathering info data: " + e.getMessage());
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "error.database-error", Map.of(
-                        "error", e.getMessage()
-                    ));
+                    MessageUtils.sendMessage(sender, "error.command-error");
                 });
             }
         });

@@ -58,27 +58,35 @@ public class VersionCommand implements SubCommand {
     public boolean execute(CommandSender sender, String[] args) {
         // Get plugin version info
         String version = plugin.getDescription().getVersion();
-        String authors = String.join(", ", plugin.getDescription().getAuthors());
+        List<String> authorsList = plugin.getDescription().getAuthors();
+        String authors = authorsList != null && !authorsList.isEmpty() ? String.join(", ", authorsList) : "Unknown";
         String website = plugin.getDescription().getWebsite();
         
         // Send plugin info
         MessageUtils.sendMessage(sender, "admin.version-header");
         MessageUtils.sendMessage(sender, "admin.version-info", Map.of(
-            "version", version,
+            "version", version != null ? version : "Unknown",
             "authors", authors,
             "website", website != null ? website : "N/A"
         ));
         
         // Show build info if available
-        if (plugin.getDescription().getCommands().containsKey("build")) {
-            Map<String, Object> buildCommand = (Map<String, Object>) plugin.getDescription().getCommands().get("build");
-            String buildNumber = buildCommand.containsKey("description") ? buildCommand.get("description").toString() : "N/A";
-            String buildDate = buildCommand.containsKey("usage") ? buildCommand.get("usage").toString() : "N/A";
-            
-            MessageUtils.sendMessage(sender, "admin.version-build", Map.of(
-                "build", buildNumber,
-                "date", buildDate
-            ));
+        Map<String, Map<String, Object>> commands = plugin.getDescription().getCommands();
+        if (commands != null && commands.containsKey("build")) {
+            try {
+                Map<String, Object> buildCommand = commands.get("build");
+                if (buildCommand != null) {
+                    String buildNumber = buildCommand.getOrDefault("description", "N/A").toString();
+                    String buildDate = buildCommand.getOrDefault("usage", "N/A").toString();
+                    
+                    MessageUtils.sendMessage(sender, "admin.version-build", Map.of(
+                        "build", buildNumber,
+                        "date", buildDate
+                    ));
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to read build information: " + e.getMessage());
+            }
         }
         
         return true;

@@ -6,6 +6,7 @@ import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.Rank;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
+import org.frizzlenpop.frizzlenPerms.models.AuditLog;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,33 +91,37 @@ public class RankRemovePermissionCommand implements SubCommand {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Remove permission from rank
-                plugin.getRankManager().removePermissionFromRank(rank.getName(), permission);
+                plugin.getRankManager().removePermissionFromRank(rank.getName(), permission, sender instanceof Player ? (Player) sender : null);
                 
                 // Log to audit log
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     plugin.getAuditManager().logAction(
-                        "RANK_PERMISSION_REMOVE",
-                        rank.getName(),
+                        player.getUniqueId(),
                         player.getName(),
+                        AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Removed permission " + permission + " from rank " + rank.getName(),
                         plugin.getConfigManager().getServerName()
                     );
                 } else {
                     plugin.getAuditManager().logAction(
-                        "RANK_PERMISSION_REMOVE",
-                        rank.getName(),
+                        null,
                         "CONSOLE",
+                        AuditLog.ActionType.RANK_MODIFY,
+                        rank.getName(),
                         "Removed permission " + permission + " from rank " + rank.getName(),
                         plugin.getConfigManager().getServerName()
                     );
                 }
                 
                 // Send success message
-                MessageUtils.sendMessage(sender, "admin.rank-permission-remove-success", Map.of(
-                    "rank", rank.getName(),
-                    "permission", permission
-                ));
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.rank-permission-remove-success", Map.of(
+                        "rank", rank.getName(),
+                        "permission", permission
+                    ));
+                });
                 
                 // Recalculate permissions for all online players with this rank
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
@@ -159,8 +164,7 @@ public class RankRemovePermissionCommand implements SubCommand {
             Rank rank = plugin.getRankManager().getRank(rankName);
             
             if (rank != null) {
-                List<String> permissions = rank.getPermissions().keySet().stream()
-                    .collect(Collectors.toList());
+                List<String> permissions = new ArrayList<>(rank.getPermissions());
                 
                 String partial = args[1].toLowerCase();
                 return permissions.stream()

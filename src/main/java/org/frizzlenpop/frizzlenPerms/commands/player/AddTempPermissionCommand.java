@@ -6,11 +6,15 @@ import org.bukkit.entity.Player;
 import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.AuditLog;
+import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.models.TempPermission;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
 import org.frizzlenpop.frizzlenPerms.utils.TimeUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -36,12 +40,12 @@ public class AddTempPermissionCommand implements SubCommand {
     
     @Override
     public String getDescription() {
-        return "Adds a temporary permission to a player.";
+        return "Add a temporary permission to a player";
     }
     
     @Override
     public String getUsage() {
-        return "/frizzlenperms addtemppermission <player> <permission> <duration>";
+        return "/perms addtemppermission <player> <permission> <duration>";
     }
     
     @Override
@@ -86,20 +90,21 @@ public class AddTempPermissionCommand implements SubCommand {
         }
         
         // Get player data
-        UUID playerUUID = null;
-        Player targetPlayer = Bukkit.getPlayer(playerName);
+        final UUID playerUUID;
+        final Player targetPlayer = Bukkit.getPlayer(playerName);
         
         if (targetPlayer != null) {
             playerUUID = targetPlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            playerUUID = plugin.getDataManager().getPlayerUUID(playerName);
-            if (playerUUID == null) {
+            PlayerData playerData = plugin.getDataManager().getPlayerDataByName(playerName);
+            if (playerData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", playerName
                 ));
                 return false;
             }
+            playerUUID = playerData.getUuid();
         }
         
         // Calculate expiration time
@@ -111,43 +116,48 @@ public class AddTempPermissionCommand implements SubCommand {
         // Add temp permission asynchronously
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                // Add temp permission
-                boolean success = plugin.getDataManager().addTempPermission(playerUUID, tempPermission);
-                
-                if (success) {
-                    // Log action
-                    String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
-                    plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.PLAYER_TEMP_PERMISSION_ADD,
-                        playerUUID,
-                        sender instanceof Player ? ((Player) sender).getUniqueId() : null,
-                        "Added temporary permission " + permission + " for " + TimeUtils.formatDuration(duration),
-                        plugin.getConfigManager().getServerName()
-                    );
-                    
-                    // Apply changes if player is online
-                    if (targetPlayer != null) {
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
-                        });
-                    }
-                    
-                    // Send success message
+                // Get player data
+                PlayerData playerData = plugin.getDataManager().getPlayerData(playerUUID);
+                if (playerData == null) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "admin.temp-permission-added", Map.of(
-                            "player", playerName,
-                            "permission", permission,
-                            "duration", TimeUtils.formatDuration(duration)
+                        MessageUtils.sendMessage(sender, "error.player-data-not-found", Map.of(
+                            "player", playerName
                         ));
                     });
-                } else {
+                    return;
+                }
+                
+                // Add the temp permission
+                playerData.addTemporaryPermission(tempPermission.getPermission(), tempPermission.getExpirationTime());
+                plugin.getDataManager().savePlayerData(playerData);
+                
+                // Log action
+                String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
+                plugin.getAuditManager().logAction(
+                    sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                    executorName,
+                    AuditLog.ActionType.PLAYER_TEMP_PERMISSION_ADD,
+                    playerName,
+                    "Added temporary permission " + permission + " for " + TimeUtils.formatDuration(duration),
+                    plugin.getConfigManager().getServerName(),
+                    playerUUID
+                );
+                
+                // Apply changes if player is online
+                if (targetPlayer != null) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "error.temp-permission-add-failed", Map.of(
-                            "player", playerName,
-                            "permission", permission
-                        ));
+                        plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
                     });
                 }
+                
+                // Send success message
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.temp-permission-added", Map.of(
+                        "player", playerName,
+                        "permission", permission,
+                        "duration", TimeUtils.formatDuration(duration)
+                    ));
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error adding temporary permission: " + e.getMessage());
                 e.printStackTrace();
@@ -175,13 +185,15 @@ public class AddTempPermissionCommand implements SubCommand {
         } else if (args.length == 2) {
             // Suggest common permissions
             String partial = args[1].toLowerCase();
-            List<String> commonPerms = Arrays.asList(
-                "minecraft.command.",
-                "bukkit.command.",
-                "frizzlenperms."
-            );
-            
-            return commonPerms.stream()
+            return List.of(
+                "minecraft.command.gamemode",
+                "minecraft.command.tp",
+                "minecraft.command.give",
+                "minecraft.command.kick",
+                "minecraft.command.ban",
+                "minecraft.command.op",
+                "minecraft.command.deop"
+            ).stream()
                 .filter(perm -> perm.toLowerCase().startsWith(partial))
                 .collect(Collectors.toList());
         } else if (args.length == 3) {
@@ -189,6 +201,6 @@ public class AddTempPermissionCommand implements SubCommand {
             return List.of("1h", "1d", "7d", "30d");
         }
         
-        return Collections.emptyList();
+        return new ArrayList<>();
     }
 } 

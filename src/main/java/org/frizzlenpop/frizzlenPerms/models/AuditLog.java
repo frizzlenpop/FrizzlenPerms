@@ -255,6 +255,8 @@ public class AuditLog {
         PLAYER_RANK_REMOVE("Player Rank Removed"),
         PLAYER_TEMP_RANK_ADD("Temporary Rank Added"),
         PLAYER_TEMP_RANK_REMOVE("Temporary Rank Removed"),
+        PLAYER_TEMP_PERMISSION_ADD("Temporary Permission Added"),
+        PLAYER_TEMP_PERMISSION_REMOVE("Temporary Permission Removed"),
         PLAYER_RANK_CLONE("Player Rank Cloned"),
         PLAYER_DATA_PURGE("Player Data Purged");
         

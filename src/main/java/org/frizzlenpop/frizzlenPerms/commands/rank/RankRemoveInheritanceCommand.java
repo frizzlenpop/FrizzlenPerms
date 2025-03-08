@@ -101,7 +101,7 @@ public class RankRemoveInheritanceCommand implements SubCommand {
             try {
                 // Remove inheritance
                 rank.removeInheritance(parentName);
-                plugin.getRankManager().removeRankPermission(rankName, "inherit." + parentName, sender instanceof Player ? (Player) sender : null);
+                plugin.getRankManager().removePermissionFromRank(rankName, "inherit." + parentName, sender instanceof Player ? (Player) sender : null);
                 
                 // Log to audit log
                 if (sender instanceof Player) {
@@ -117,7 +117,7 @@ public class RankRemoveInheritanceCommand implements SubCommand {
                 } else {
                     plugin.getAuditManager().logAction(
                         null,
-                        "Console",
+                        "CONSOLE",
                         AuditLog.ActionType.RANK_MODIFY,
                         rankName,
                         "Removed inheritance from " + parentName,
@@ -126,15 +126,23 @@ public class RankRemoveInheritanceCommand implements SubCommand {
                 }
                 
                 // Send success message
-                MessageUtils.sendMessage(sender, "admin.rank-remove-inheritance-success", Map.of(
-                    "rank", rankName,
-                    "parent", parentName
-                ));
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.rank-remove-inheritance-success", Map.of(
+                        "rank", rankName,
+                        "parent", parentName
+                    ));
+                });
                 
                 // Update permissions for all online players with this rank
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     plugin.getServer().getOnlinePlayers().stream()
-                        .filter(player -> plugin.getPermissionManager().hasRank(player, rank.getName()))
+                        .filter(player -> {
+                            try {
+                                return plugin.getPermissionManager().hasRank(player, rank.getName());
+                            } catch (Exception e) {
+                                return false;
+                            }
+                        })
                         .forEach(player -> plugin.getPermissionManager().calculateAndApplyPermissions(player));
                 });
                 
