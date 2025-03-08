@@ -79,7 +79,8 @@ public class RankAddPermissionCommand implements SubCommand {
         }
         
         // Check if permission already exists
-        if (rank.hasPermission(permission) && rank.getPermissionValue(permission) == value) {
+        boolean hasNegated = rank.hasPermission("-" + permission);
+        if ((value && rank.hasPermission(permission)) || (!value && hasNegated)) {
             MessageUtils.sendMessage(sender, "error.rank-permission-already-exists", Map.of(
                 "rank", rank.getName(),
                 "permission", permission,
@@ -92,7 +93,7 @@ public class RankAddPermissionCommand implements SubCommand {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 // Add permission to rank
-                plugin.getRankManager().addPermissionToRank(rank.getName(), permission, value);
+                plugin.getRankManager().addPermissionToRank(rank.getName(), permission, value, sender instanceof Player ? (Player) sender : null);
                 
                 // Log to audit log
                 if (sender instanceof Player) {

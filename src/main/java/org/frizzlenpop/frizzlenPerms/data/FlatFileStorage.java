@@ -260,4 +260,48 @@ public class FlatFileStorage implements StorageProvider {
         }
         return null;
     }
+
+    @Override
+    public void cleanupAuditLogs(int daysToKeep) {
+        long cutoffTime = System.currentTimeMillis() - (daysToKeep * 24L * 60L * 60L * 1000L);
+        auditLogs.removeIf(log -> log.getTimestamp() < cutoffTime);
+        saveAuditLogs();
+    }
+
+    @Override
+    public void deletePlayerData(UUID uuid) {
+        if (uuid == null) {
+            return;
+        }
+
+        File playerFile = getPlayerFile(uuid);
+        if (playerFile.exists()) {
+            if (!playerFile.delete()) {
+                plugin.getLogger().warning("Failed to delete player data file for " + uuid);
+            }
+        }
+    }
+
+    @Override
+    public List<PlayerData> getAllPlayerData() {
+        List<PlayerData> allPlayers = new ArrayList<>();
+        
+        File[] playerFiles = playersDir.listFiles((dir, fileName) -> fileName.endsWith(".json"));
+        if (playerFiles == null) {
+            return allPlayers;
+        }
+        
+        for (File playerFile : playerFiles) {
+            try (FileReader reader = new FileReader(playerFile)) {
+                PlayerData playerData = gson.fromJson(reader, PlayerData.class);
+                if (playerData != null) {
+                    allPlayers.add(playerData);
+                }
+            } catch (IOException e) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to read player file: " + playerFile.getName(), e);
+            }
+        }
+        
+        return allPlayers;
+    }
 } 

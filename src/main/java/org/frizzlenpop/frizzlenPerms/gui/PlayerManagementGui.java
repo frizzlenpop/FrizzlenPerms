@@ -72,7 +72,7 @@ public class PlayerManagementGui implements PermissionGui {
         for (int i = startIndex; i < endIndex; i++) {
             PlayerData playerData = allPlayerData.get(i);
             UUID playerUuid = playerData.getUuid();
-            String playerName = playerData.getName();
+            String playerName = playerData.getPlayerName();
             
             ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
@@ -103,7 +103,13 @@ public class PlayerManagementGui implements PermissionGui {
             }
             
             // Add ranks
-            Set<String> ranks = playerData.getRanks();
+            Set<String> ranks = new HashSet<>();
+            String primaryRank = playerData.getPrimaryRank();
+            if (primaryRank != null) {
+                ranks.add(primaryRank);
+            }
+            ranks.addAll(playerData.getSecondaryRanks());
+            
             if (!ranks.isEmpty()) {
                 lore.add(MessageUtils.formatColors("&7Ranks: &f" + String.join(", ", ranks)));
             } else {

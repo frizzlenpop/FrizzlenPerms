@@ -86,7 +86,7 @@ public class PlayerListener implements Listener {
         dataManager.savePlayerData(playerData);
         
         // Set up permissions
-        permissionManager.setupPlayer(player);
+        permissionManager.setupPermissions(player);
         
         // Send welcome message if configured
         // TODO: Implement welcome message

@@ -106,7 +106,7 @@ public class RankListCommand implements SubCommand {
         
         // Send rank entries
         for (Rank rank : pageRanks) {
-            boolean isDefault = rank.isDefaultRank();
+            boolean isDefault = rank.isDefault();
             String prefix = rank.getPrefix() != null ? rank.getPrefix() : "";
             String suffix = rank.getSuffix() != null ? rank.getSuffix() : "";
             

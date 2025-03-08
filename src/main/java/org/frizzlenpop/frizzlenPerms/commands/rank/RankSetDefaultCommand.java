@@ -97,7 +97,7 @@ public class RankSetDefaultCommand implements SubCommand {
                 }
                 
                 // Set as default
-                plugin.getRankManager().setDefaultRank(rank.getName());
+                plugin.getRankManager().setDefaultRank(rank.getName(), sender instanceof Player ? (Player) sender : null);
                 
                 // Log to audit log
                 if (sender instanceof Player) {
