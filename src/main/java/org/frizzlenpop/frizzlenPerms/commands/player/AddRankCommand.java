@@ -129,14 +129,14 @@ public class AddRankCommand implements SubCommand {
             );
             
             // Send success message
-            MessageUtils.sendMessage(sender, "admin.addrank-success", Map.of(
+            MessageUtils.sendMessage(sender, "players.add-rank-success", Map.of(
                 "player", playerName,
                 "rank", rank.getDisplayName()
             ));
             
             // Send notification to player if online
             if (player != null && player.isOnline() && !player.equals(sender)) {
-                MessageUtils.sendMessage(player, "player.rank-added", Map.of(
+                MessageUtils.sendMessage(player, "players.rank-added", Map.of(
                     "rank", rank.getDisplayName()
                 ));
             }

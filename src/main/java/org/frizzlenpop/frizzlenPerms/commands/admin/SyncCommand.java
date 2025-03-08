@@ -67,7 +67,7 @@ public class SyncCommand implements SubCommand {
         
         // Check if sync is enabled
         if (!plugin.getConfigManager().isSyncEnabled()) {
-            MessageUtils.sendMessage(sender, "sync.not-enabled");
+            MessageUtils.sendMessage(sender, "admin.sync-not-enabled");
             return false;
         }
         
@@ -110,20 +110,20 @@ public class SyncCommand implements SubCommand {
             }
             
             // Push online player data
-            MessageUtils.sendMessage(sender, "sync.pushing-player", Map.of(
+            MessageUtils.sendMessage(sender, "admin.sync-pushing-player", Map.of(
                 "player", player.getName()
             ));
             
             // Simulate successful push
-            MessageUtils.sendMessage(sender, "sync.push-success-player", Map.of(
+            MessageUtils.sendMessage(sender, "admin.sync-success", Map.of(
                 "player", player.getName()
             ));
         } else {
             // Push all data
-            MessageUtils.sendMessage(sender, "sync.pushing-all");
+            MessageUtils.sendMessage(sender, "admin.sync-pushing-all");
             
             // Simulate successful push
-            MessageUtils.sendMessage(sender, "sync.push-success-all");
+            MessageUtils.sendMessage(sender, "admin.sync-success");
         }
         
         return true;
@@ -150,12 +150,12 @@ public class SyncCommand implements SubCommand {
             }
             
             // Pull online player data
-            MessageUtils.sendMessage(sender, "sync.pulling-player", Map.of(
+            MessageUtils.sendMessage(sender, "admin.sync-pulling-player", Map.of(
                 "player", player.getName()
             ));
             
             // Simulate successful pull
-            MessageUtils.sendMessage(sender, "sync.pull-success-player", Map.of(
+            MessageUtils.sendMessage(sender, "admin.sync-success", Map.of(
                 "player", player.getName()
             ));
             
@@ -163,10 +163,10 @@ public class SyncCommand implements SubCommand {
             plugin.getPermissionManager().setupPermissions(player);
         } else {
             // Pull all data
-            MessageUtils.sendMessage(sender, "sync.pulling-all");
+            MessageUtils.sendMessage(sender, "admin.sync-pulling-all");
             
             // Simulate successful pull
-            MessageUtils.sendMessage(sender, "sync.pull-success-all");
+            MessageUtils.sendMessage(sender, "admin.sync-success");
             
             // Update permissions for all online players
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -184,37 +184,22 @@ public class SyncCommand implements SubCommand {
      * @return Whether the operation was successful
      */
     private boolean handleStatus(CommandSender sender) {
-        MessageUtils.sendMessage(sender, "sync.status-header");
+        MessageUtils.sendMessage(sender, "admin.sync-status-header");
         
         // Display status
-        MessageUtils.sendMessage(sender, "sync.status-connected", Map.of(
-            "connected", "Yes"
-        ));
-        
-        MessageUtils.sendMessage(sender, "sync.status-method", Map.of(
-            "method", "MySQL"
-        ));
-        
-        MessageUtils.sendMessage(sender, "sync.status-server", Map.of(
-            "server", plugin.getConfigManager().getMySQLHost()
-        ));
-        
-        MessageUtils.sendMessage(sender, "sync.status-database", Map.of(
-            "database", plugin.getConfigManager().getMySQLDatabase()
-        ));
-        
-        MessageUtils.sendMessage(sender, "sync.status-server-name", Map.of(
+        MessageUtils.sendMessage(sender, "admin.sync-status", Map.of(
+            "connected", "Yes",
+            "method", "MySQL",
+            "server", plugin.getConfigManager().getMySQLHost(),
+            "database", plugin.getConfigManager().getMySQLDatabase(),
             "name", "FrizzlenPerms Server"
         ));
         
         // Show last sync times
         Date now = new Date();
-        MessageUtils.sendMessage(sender, "sync.status-last-push", Map.of(
-            "time", now.toString()
-        ));
-        
-        MessageUtils.sendMessage(sender, "sync.status-last-pull", Map.of(
-            "time", now.toString()
+        MessageUtils.sendMessage(sender, "admin.sync-last-sync", Map.of(
+            "last_push", now.toString(),
+            "last_pull", now.toString()
         ));
         
         return true;

@@ -117,7 +117,7 @@ public class RankSetSuffixCommand implements SubCommand {
                 }
                 
                 // Send success message
-                MessageUtils.sendMessage(sender, "admin.rank-set-suffix-success", Map.of(
+                MessageUtils.sendMessage(sender, "ranks.set-suffix-success", Map.of(
                     "rank", rank.getName(),
                     "suffix", suffix
                 ));

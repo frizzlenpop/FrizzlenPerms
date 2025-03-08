@@ -1,7 +1,7 @@
 name: FrizzlenPerms
 version: '1.0-SNAPSHOT'
 main: org.frizzlenpop.frizzlenPerms.FrizzlenPerms
-api-version: '1.21'
+api-version: '1.20'
 load: STARTUP
 authors: [ frizzlenpop ]
 description: Advanced Permissions & Rank System for Paper
@@ -17,25 +17,25 @@ permissions:
     description: Gives access to all FrizzlenPerms commands
     default: op
     children:
-      frizzlenperms.rank.*: true
-      frizzlenperms.permission.*: true
-      frizzlenperms.discord.*: true
-      frizzlenperms.audit.*: true
-      frizzlenperms.gui: true
-      frizzlenperms.reload: true
+      frizzlenperms.rank.*: 'true'
+      frizzlenperms.permission.*: 'true'
+      frizzlenperms.discord.*: 'true'
+      frizzlenperms.audit.*: 'true'
+      frizzlenperms.gui: 'true'
+      frizzlenperms.reload: 'true'
   
   frizzlenperms.rank.*:
     description: Gives access to all rank commands
     default: op
     children:
-      frizzlenperms.rank.create: true
-      frizzlenperms.rank.delete: true
-      frizzlenperms.rank.set: true
-      frizzlenperms.rank.set.temporary: true
-      frizzlenperms.rank.history: true
-      frizzlenperms.rank.rollback: true
-      frizzlenperms.rank.list: true
-      frizzlenperms.rank.info: true
+      frizzlenperms.rank.create: 'true'
+      frizzlenperms.rank.delete: 'true'
+      frizzlenperms.rank.set: 'true'
+      frizzlenperms.rank.set.temporary: 'true'
+      frizzlenperms.rank.history: 'true'
+      frizzlenperms.rank.rollback: 'true'
+      frizzlenperms.rank.list: 'true'
+      frizzlenperms.rank.info: 'true'
   
   frizzlenperms.rank.create:
     description: Allows creating ranks
@@ -73,11 +73,11 @@ permissions:
     description: Gives access to all permission commands
     default: op
     children:
-      frizzlenperms.permission.add: true
-      frizzlenperms.permission.remove: true
-      frizzlenperms.permission.list: true
-      frizzlenperms.permission.audit: true
-      frizzlenperms.permission.expire: true
+      frizzlenperms.permission.add: 'true'
+      frizzlenperms.permission.remove: 'true'
+      frizzlenperms.permission.list: 'true'
+      frizzlenperms.permission.audit: 'true'
+      frizzlenperms.permission.expire: 'true'
   
   frizzlenperms.permission.add:
     description: Allows adding permissions to players or ranks
@@ -103,9 +103,9 @@ permissions:
     description: Gives access to all Discord commands
     default: op
     children:
-      frizzlenperms.discord.sync: true
-      frizzlenperms.discord.link: true
-      frizzlenperms.discord.unlink: true
+      frizzlenperms.discord.sync: 'true'
+      frizzlenperms.discord.link: 'true'
+      frizzlenperms.discord.unlink: 'true'
   
   frizzlenperms.discord.sync:
     description: Allows syncing a player's rank with Discord
@@ -123,8 +123,8 @@ permissions:
     description: Gives access to all audit commands
     default: op
     children:
-      frizzlenperms.audit.view: true
-      frizzlenperms.audit.clear: true
+      frizzlenperms.audit.view: 'true'
+      frizzlenperms.audit.clear: 'true'
   
   frizzlenperms.audit.view:
     description: Allows viewing audit logs

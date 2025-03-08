@@ -68,7 +68,7 @@ public class RankCreateCommand implements SubCommand {
         // Get rank name and validate format
         final String rankName = args[0];
         if (!rankName.matches("^[a-zA-Z0-9_-]{1,32}$")) {
-            MessageUtils.sendMessage(sender, "rank.invalid-name", Map.of(
+            MessageUtils.sendMessage(sender, "error.invalid-rank-name", Map.of(
                 "rank", rankName,
                 "format", "letters, numbers, underscores, and hyphens (max 32 characters)"
             ));
@@ -77,7 +77,7 @@ public class RankCreateCommand implements SubCommand {
         
         // Check if rank already exists
         if (plugin.getRankManager().getRank(rankName) != null) {
-            MessageUtils.sendMessage(sender, "rank.already-exists", Map.of("rank", rankName));
+            MessageUtils.sendMessage(sender, "ranks.rank-exists", Map.of("rank", rankName));
             return true;
         }
         
@@ -89,7 +89,7 @@ public class RankCreateCommand implements SubCommand {
         if (args.length > 1) {
             displayName = args[1];
             if (displayName.length() > 48) {
-                MessageUtils.sendMessage(sender, "rank.display-name-too-long", Map.of(
+                MessageUtils.sendMessage(sender, "error.display-name-too-long", Map.of(
                     "max", "48"
                 ));
                 return false;
@@ -100,14 +100,14 @@ public class RankCreateCommand implements SubCommand {
             try {
                 weight = Integer.parseInt(args[2]);
                 if (weight < -999 || weight > 999) {
-                    MessageUtils.sendMessage(sender, "rank.weight-out-of-range", Map.of(
+                    MessageUtils.sendMessage(sender, "error.weight-out-of-range", Map.of(
                         "min", "-999",
                         "max", "999"
                     ));
                     return false;
                 }
             } catch (NumberFormatException e) {
-                MessageUtils.sendMessage(sender, "rank.invalid-weight", Map.of("weight", args[2]));
+                MessageUtils.sendMessage(sender, "error.invalid-weight", Map.of("weight", args[2]));
                 return false;
             }
         }
@@ -122,7 +122,7 @@ public class RankCreateCommand implements SubCommand {
             
             // Check if color is valid
             if (color.length() != 2 || !isValidColorCode(color.charAt(1))) {
-                MessageUtils.sendMessage(sender, "rank.invalid-color", Map.of("color", color));
+                MessageUtils.sendMessage(sender, "error.invalid-color", Map.of("color", color));
                 return false;
             }
         }
@@ -145,20 +145,20 @@ public class RankCreateCommand implements SubCommand {
                 
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (success) {
-                        MessageUtils.sendMessage(sender, "rank.created", Map.of(
+                        MessageUtils.sendMessage(sender, "ranks.create-success", Map.of(
                             "rank", rankName,
                             "display", finalDisplayName,
                             "weight", String.valueOf(finalWeight),
                             "color", finalColor
                         ));
                     } else {
-                        MessageUtils.sendMessage(sender, "rank.create-failed", Map.of("rank", rankName));
+                        MessageUtils.sendMessage(sender, "ranks.create-failed", Map.of("rank", rankName));
                     }
                 });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error creating rank: " + e.getMessage());
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "error.command-error");
+                    MessageUtils.sendMessage(sender, "error.internal-error");
                 });
             }
         });

@@ -103,15 +103,14 @@ public class SetRankCommand implements SubCommand {
             plugin.getRankManager().setPrimaryRank(playerData.getUuid(), rank.getName(), actor);
             
             // Send success message
-            MessageUtils.sendMessage(sender, "admin.setrank-success", Map.of(
+            MessageUtils.sendMessage(sender, "players.set-rank-success", Map.of(
                 "player", playerName,
-                "rank", rank.getDisplayName(),
-                "old_rank", oldRank != null ? plugin.getRankManager().getRank(oldRank).getDisplayName() : "None"
+                "rank", rank.getDisplayName()
             ));
             
             // Send notification to player if online
             if (player != null && player.isOnline() && !player.equals(sender)) {
-                MessageUtils.sendMessage(player, "player.rank-changed", Map.of(
+                MessageUtils.sendMessage(player, "players.rank-changed", Map.of(
                     "rank", rank.getDisplayName()
                 ));
             }

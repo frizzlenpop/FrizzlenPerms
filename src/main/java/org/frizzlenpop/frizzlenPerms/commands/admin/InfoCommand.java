@@ -125,13 +125,13 @@ public class InfoCommand implements SubCommand {
                         ));
                     } catch (Exception e) {
                         plugin.getLogger().severe("Error sending info messages: " + e.getMessage());
-                        MessageUtils.sendMessage(sender, "error.command-error");
+                        MessageUtils.sendMessage(sender, "error.internal-error");
                     }
                 });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error gathering info data: " + e.getMessage());
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    MessageUtils.sendMessage(sender, "error.command-error");
+                    MessageUtils.sendMessage(sender, "error.internal-error");
                 });
             }
         });

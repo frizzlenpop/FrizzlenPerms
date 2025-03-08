@@ -98,7 +98,7 @@ public class RankDeleteCommand implements SubCommand {
                 confirmations.remove(confirmKey);
             }, 1200L); // 60 seconds * 20 ticks
             
-            MessageUtils.sendMessage(sender, "admin.rank-delete-confirm", Map.of(
+            MessageUtils.sendMessage(sender, "ranks.delete-confirm", Map.of(
                 "rank", rankName,
                 "command", "/frizzlenperms rankdelete " + rankName + " confirm"
             ));
@@ -138,11 +138,11 @@ public class RankDeleteCommand implements SubCommand {
                     }
                     
                     // Send success message
-                    MessageUtils.sendMessage(sender, "admin.rank-delete-success", Map.of(
+                    MessageUtils.sendMessage(sender, "ranks.delete-success", Map.of(
                         "rank", rankName
                     ));
                 } else {
-                    MessageUtils.sendMessage(sender, "error.rank-delete-failed", Map.of(
+                    MessageUtils.sendMessage(sender, "ranks.delete-failed", Map.of(
                         "rank", rankName
                     ));
                 }

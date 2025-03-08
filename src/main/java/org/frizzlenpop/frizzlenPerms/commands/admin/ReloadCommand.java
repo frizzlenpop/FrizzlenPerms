@@ -91,7 +91,7 @@ public class ReloadCommand implements SubCommand {
         } catch (Exception e) {
             plugin.getLogger().severe("Error reloading plugin: " + e.getMessage());
             e.printStackTrace();
-            MessageUtils.sendMessage(sender, "admin.reload-error", Map.of("error", e.getMessage()));
+            MessageUtils.sendMessage(sender, "error.internal-error", Map.of("error", e.getMessage()));
             return true;
         }
     }

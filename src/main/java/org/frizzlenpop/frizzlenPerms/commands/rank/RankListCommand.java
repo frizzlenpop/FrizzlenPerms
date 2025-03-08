@@ -85,7 +85,7 @@ public class RankListCommand implements SubCommand {
         
         if (page > maxPage) {
             if (totalRanks == 0) {
-                MessageUtils.sendMessage(sender, "admin.rank-list-empty");
+                MessageUtils.sendMessage(sender, "ranks.rank-list-empty");
                 return true;
             } else {
                 page = maxPage;
@@ -98,10 +98,9 @@ public class RankListCommand implements SubCommand {
         List<Rank> pageRanks = ranks.subList(startIndex, endIndex);
         
         // Send list header
-        MessageUtils.sendMessage(sender, "admin.rank-list-header", Map.of(
+        MessageUtils.sendMessage(sender, "ranks.rank-list-header", Map.of(
             "page", String.valueOf(page),
-            "max_page", String.valueOf(maxPage),
-            "total", String.valueOf(totalRanks)
+            "total", String.valueOf(maxPage)
         ));
         
         // Send rank entries
@@ -110,23 +109,17 @@ public class RankListCommand implements SubCommand {
             String prefix = rank.getPrefix() != null ? rank.getPrefix() : "";
             String suffix = rank.getSuffix() != null ? rank.getSuffix() : "";
             
-            MessageUtils.sendMessage(sender, "admin.rank-list-entry", Map.of(
-                "name", rank.getName(),
-                "display_name", rank.getDisplayName(),
-                "weight", String.valueOf(rank.getWeight()),
-                "default", isDefault ? "Yes" : "No",
-                "prefix", prefix,
-                "suffix", suffix,
-                "color", rank.getColor() != null ? rank.getColor() : ""
+            MessageUtils.sendMessage(sender, "ranks.rank-list-entry", Map.of(
+                "rank", rank.getName(),
+                "weight", String.valueOf(rank.getWeight())
             ));
         }
         
         // Send list footer
-        if (page < maxPage) {
-            MessageUtils.sendMessage(sender, "admin.rank-list-footer", Map.of(
-                "command", "/frizzlenperms ranklist " + (page + 1)
-            ));
-        }
+        MessageUtils.sendMessage(sender, "ranks.rank-list-footer", Map.of(
+            "page", String.valueOf(page),
+            "total", String.valueOf(maxPage)
+        ));
         
         return true;
     }

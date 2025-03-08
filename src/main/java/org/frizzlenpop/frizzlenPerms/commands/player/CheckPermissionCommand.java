@@ -135,12 +135,12 @@ public class CheckPermissionCommand implements SubCommand {
         boolean hasPermission = targetPlayer.hasPermission(permission);
         
         if (hasPermission) {
-            MessageUtils.sendMessage(sender, "admin.checkperm-has", Map.of(
+            MessageUtils.sendMessage(sender, "players.check-permission-true", Map.of(
                 "player", playerName,
                 "permission", permission
             ));
         } else {
-            MessageUtils.sendMessage(sender, "admin.checkperm-doesnt-have", Map.of(
+            MessageUtils.sendMessage(sender, "players.check-permission-false", Map.of(
                 "player", playerName,
                 "permission", permission
             ));

@@ -90,7 +90,7 @@ public class RankSetColorCommand implements SubCommand {
         
         // Check if color is already set to the same value
         if (color.equals(rank.getColor())) {
-            MessageUtils.sendMessage(sender, "error.rank-color-already-set", Map.of(
+            MessageUtils.sendMessage(sender, "ranks.color-already-set", Map.of(
                 "rank", rankName,
                 "color", color
             ));
@@ -128,7 +128,7 @@ public class RankSetColorCommand implements SubCommand {
                 }
                 
                 // Send success message
-                MessageUtils.sendMessage(sender, "admin.rank-set-color-success", Map.of(
+                MessageUtils.sendMessage(sender, "ranks.set-color-success", Map.of(
                     "rank", rankName,
                     "color", color
                 ));

@@ -112,11 +112,15 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      * @param command The subcommand to register
      */
     private void registerCommand(SubCommand command) {
-        commands.put(command.getName().toLowerCase(), command);
+        String name = command.getName().toLowerCase();
+        plugin.getLogger().info("Registering command: " + name);
+        commands.put(name, command);
         
         // Register aliases
         for (String alias : command.getAliases()) {
-            aliases.put(alias.toLowerCase(), command);
+            String lowerAlias = alias.toLowerCase();
+            plugin.getLogger().info("  - Adding alias: " + lowerAlias + " -> " + name);
+            aliases.put(lowerAlias, command);
         }
     }
     
@@ -128,7 +132,22 @@ public class CommandManager implements CommandExecutor, TabCompleter {
      */
     public SubCommand getCommand(String name) {
         String lowercaseName = name.toLowerCase();
-        return commands.getOrDefault(lowercaseName, aliases.get(lowercaseName));
+        plugin.getLogger().info("Looking up command: " + lowercaseName);
+        
+        SubCommand command = commands.get(lowercaseName);
+        if (command != null) {
+            plugin.getLogger().info("Found command by name: " + lowercaseName);
+            return command;
+        }
+        
+        command = aliases.get(lowercaseName);
+        if (command != null) {
+            plugin.getLogger().info("Found command by alias: " + lowercaseName + " -> " + command.getName());
+        } else {
+            plugin.getLogger().info("Command not found: " + lowercaseName);
+        }
+        
+        return command;
     }
     
     /**
@@ -142,35 +161,47 @@ public class CommandManager implements CommandExecutor, TabCompleter {
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        plugin.getLogger().info("Command received: " + label + " " + String.join(" ", args));
+        
         if (args.length == 0) {
             // Show help message
+            plugin.getLogger().info("No arguments provided, showing help message");
             showHelpMessage(sender);
             return true;
         }
         
         String subCommandName = args[0].toLowerCase();
-        SubCommand subCommand = commands.getOrDefault(subCommandName, aliases.get(subCommandName));
+        SubCommand subCommand = getCommand(subCommandName);
         
         if (subCommand == null) {
             // Unknown command
-            MessageUtils.sendMessage(sender, "general.unknown-command", Map.of("command", label));
+            plugin.getLogger().info("Unknown command: " + subCommandName);
+            MessageUtils.sendMessage(sender, "general.unknown-command", Map.of(
+                "command", subCommandName,
+                "usage", "/frizzlenperms help"
+            ));
             return true;
         }
         
+        plugin.getLogger().info("Found command: " + subCommand.getName());
+        
         // Check permission
         if (!subCommand.hasPermission(sender)) {
+            plugin.getLogger().info("No permission for command: " + subCommand.getName());
             MessageUtils.sendMessage(sender, "general.no-permission");
             return true;
         }
         
         // Check if command is player-only
         if (subCommand.isPlayerOnly() && !(sender instanceof Player)) {
+            plugin.getLogger().info("Player-only command used from console: " + subCommand.getName());
             MessageUtils.sendMessage(sender, "general.player-only");
             return true;
         }
         
         // Check if command is console-only
         if (subCommand.isConsoleOnly() && sender instanceof Player) {
+            plugin.getLogger().info("Console-only command used by player: " + subCommand.getName());
             MessageUtils.sendMessage(sender, "general.console-only");
             return true;
         }
@@ -180,16 +211,22 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         
         // Check argument count
         if (subArgs.length < subCommand.getMinArgs()) {
-            MessageUtils.sendMessage(sender, "general.invalid-arguments", Map.of("command", label));
-            sender.sendMessage(subCommand.getUsage());
+            plugin.getLogger().info("Not enough arguments for command: " + subCommand.getName());
+            MessageUtils.sendMessage(sender, "error.missing-arguments", Map.of(
+                "usage", subCommand.getUsage()
+            ));
             return true;
         }
         
         // Execute the command
         try {
+            plugin.getLogger().info("Executing command: " + subCommand.getName() + " with args: " + String.join(" ", subArgs));
             if (!subCommand.execute(sender, subArgs)) {
                 // Command returned usage
-                sender.sendMessage(subCommand.getUsage());
+                plugin.getLogger().info("Command returned usage: " + subCommand.getName());
+                MessageUtils.sendMessage(sender, "error.invalid-arguments", Map.of(
+                    "usage", subCommand.getUsage()
+                ));
             }
         } catch (Exception e) {
             plugin.getLogger().severe("Error executing command " + subCommandName + ": " + e.getMessage());

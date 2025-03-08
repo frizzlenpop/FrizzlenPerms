@@ -117,7 +117,7 @@ public class RankSetPrefixCommand implements SubCommand {
                 }
                 
                 // Send success message
-                MessageUtils.sendMessage(sender, "admin.rank-set-prefix-success", Map.of(
+                MessageUtils.sendMessage(sender, "ranks.set-prefix-success", Map.of(
                     "rank", rank.getName(),
                     "prefix", prefix
                 ));

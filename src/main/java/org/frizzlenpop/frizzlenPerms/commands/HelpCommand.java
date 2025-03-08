@@ -149,7 +149,7 @@ public class HelpCommand implements SubCommand {
         for (int i = startIndex; i < endIndex; i++) {
             SubCommand command = availableCommands.get(i);
             MessageUtils.sendMessage(sender, "help.command", Map.of(
-                "command", command.getName(),
+                "command", "frizzlenperms " + command.getName(),
                 "description", command.getDescription()
             ));
         }
@@ -206,5 +206,20 @@ public class HelpCommand implements SubCommand {
         
         int commandsPerPage = plugin.getConfigManager().getCommandsPerPage();
         return (int) Math.ceil((double) availableCommands / commandsPerPage);
+    }
+
+    private void showHelpMessage(CommandSender sender) {
+        MessageUtils.sendMessage(sender, "help.header", Map.of("page", "1", "total", "1"));
+        
+        for (SubCommand subCommand : plugin.getCommandManager().getCommands()) {
+            if (subCommand.hasPermission(sender)) {
+                MessageUtils.sendMessage(sender, "help.command", Map.of(
+                    "command", "frizzlenperms " + subCommand.getName(),
+                    "description", subCommand.getDescription()
+                ));
+            }
+        }
+        
+        MessageUtils.sendMessage(sender, "help.footer");
     }
 } 

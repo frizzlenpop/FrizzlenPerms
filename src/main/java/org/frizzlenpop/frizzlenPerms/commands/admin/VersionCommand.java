@@ -63,8 +63,7 @@ public class VersionCommand implements SubCommand {
         String website = plugin.getDescription().getWebsite();
         
         // Send plugin info
-        MessageUtils.sendMessage(sender, "admin.version-header");
-        MessageUtils.sendMessage(sender, "admin.version-info", Map.of(
+        MessageUtils.sendMessage(sender, "general.plugin-info", Map.of(
             "version", version != null ? version : "Unknown",
             "authors", authors,
             "website", website != null ? website : "N/A"
@@ -79,7 +78,7 @@ public class VersionCommand implements SubCommand {
                     String buildNumber = buildCommand.getOrDefault("description", "N/A").toString();
                     String buildDate = buildCommand.getOrDefault("usage", "N/A").toString();
                     
-                    MessageUtils.sendMessage(sender, "admin.version-build", Map.of(
+                    MessageUtils.sendMessage(sender, "general.plugin-build", Map.of(
                         "build", buildNumber,
                         "date", buildDate
                     ));

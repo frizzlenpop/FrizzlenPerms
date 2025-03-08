@@ -214,7 +214,7 @@ time:
 help:
   header: "&6=== &eFrizzlenPerms Help (%page%/%total%) &6==="
   command: "&e/%command% &7- &f%description%"
-  footer: "&6=== &eUse /fp help [page] for more &6=== 
+  footer: "&6=== &eUse /fp help [page] for more &6==="
 
 # Error messages
 error:

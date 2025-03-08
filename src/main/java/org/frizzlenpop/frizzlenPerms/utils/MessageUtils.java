@@ -36,35 +36,55 @@ public class MessageUtils {
         String message = plugin.getConfigManager().getMessage(path, null);
         
         if (message == null || message.isEmpty()) {
+            plugin.getLogger().warning("Message not found for path: " + path);
             return;
         }
         
         // Add prefix if not a header/footer
         if (!path.contains("header") && !path.contains("footer")) {
             String prefix = plugin.getConfigManager().getMessage("general.prefix", "&8[&6FrizzlenPerms&8] &r");
+            if (prefix == null || prefix.isEmpty()) {
+                plugin.getLogger().warning("Prefix not found in messages.yml");
+            }
             message = prefix + message;
         }
         
         // Replace placeholders
         if (placeholders != null && !placeholders.isEmpty()) {
-            Matcher matcher = PLACEHOLDER_PATTERN.matcher(message);
-            StringBuffer buffer = new StringBuffer();
-            
-            while (matcher.find()) {
-                String placeholder = matcher.group(1);
-                String replacement = placeholders.getOrDefault(placeholder, matcher.group(0));
-                matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+            try {
+                Matcher matcher = PLACEHOLDER_PATTERN.matcher(message);
+                StringBuffer buffer = new StringBuffer();
+                
+                while (matcher.find()) {
+                    String placeholder = matcher.group(1);
+                    String replacement = placeholders.getOrDefault(placeholder, matcher.group(0));
+                    matcher.appendReplacement(buffer, Matcher.quoteReplacement(replacement));
+                }
+                
+                matcher.appendTail(buffer);
+                message = buffer.toString();
+            } catch (Exception e) {
+                plugin.getLogger().severe("Error replacing placeholders in message: " + path);
+                e.printStackTrace();
             }
-            
-            matcher.appendTail(buffer);
-            message = buffer.toString();
         }
         
         // Convert color codes
-        message = ChatColor.translateAlternateColorCodes('&', message);
+        try {
+            message = ChatColor.translateAlternateColorCodes('&', message);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Error translating color codes in message: " + path);
+            e.printStackTrace();
+        }
         
         // Send the message
-        sender.sendMessage(message);
+        try {
+            sender.sendMessage(message);
+            plugin.getLogger().info("Sent message: " + message + " to " + sender.getName());
+        } catch (Exception e) {
+            plugin.getLogger().severe("Error sending message to " + sender.getName());
+            e.printStackTrace();
+        }
     }
     
     /**

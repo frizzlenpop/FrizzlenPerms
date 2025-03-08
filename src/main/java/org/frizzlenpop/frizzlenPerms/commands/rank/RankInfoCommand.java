@@ -75,27 +75,42 @@ public class RankInfoCommand implements SubCommand {
         }
         
         // Display rank information
-        MessageUtils.sendMessage(sender, "rank.info-header", Map.of(
+        MessageUtils.sendMessage(sender, "ranks.info-header", Map.of(
             "rank", rank.getDisplayName(),
             "name", rank.getName()
         ));
         
         // Basic info
-        MessageUtils.sendMessage(sender, "rank.info-basic", Map.of(
-            "prefix", rank.getPrefix() != null ? rank.getPrefix() : "None",
-            "suffix", rank.getSuffix() != null ? rank.getSuffix() : "None",
-            "weight", String.valueOf(rank.getWeight()),
-            "color", rank.getColor() != null ? rank.getColor() : "None",
-            "default", rank.isDefault() ? "Yes" : "No",
+        MessageUtils.sendMessage(sender, "ranks.info-display-name", Map.of(
+            "display_name", rank.getDisplayName()
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-prefix", Map.of(
+            "prefix", rank.getPrefix() != null ? rank.getPrefix() : "None"
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-suffix", Map.of(
+            "suffix", rank.getSuffix() != null ? rank.getSuffix() : "None"
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-weight", Map.of(
+            "weight", String.valueOf(rank.getWeight())
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-chat-color", Map.of(
+            "chat_color", rank.getColor() != null ? rank.getColor() : "None"
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-default", Map.of(
+            "default", rank.isDefault() ? "Yes" : "No"
+        ));
+        MessageUtils.sendMessage(sender, "ranks.info-ladder", Map.of(
             "ladder", rank.getLadder() != null ? rank.getLadder() : "default"
         ));
         
         // Inheritance
         List<String> inheritance = rank.getInheritance();
         if (inheritance.isEmpty()) {
-            MessageUtils.sendMessage(sender, "rank.info-inheritance-none");
+            MessageUtils.sendMessage(sender, "ranks.info-inheritance", Map.of(
+                "inheritance", "None"
+            ));
         } else {
-            MessageUtils.sendMessage(sender, "rank.info-inheritance", Map.of(
+            MessageUtils.sendMessage(sender, "ranks.info-inheritance", Map.of(
                 "inheritance", inheritance.stream()
                     .map(name -> {
                         Rank parent = plugin.getRankManager().getRank(name);
@@ -109,74 +124,47 @@ public class RankInfoCommand implements SubCommand {
         Set<String> permissions = rank.getPermissions();
         int permCount = permissions.size();
         
-        // Show permission count
-        MessageUtils.sendMessage(sender, "rank.info-permissions-count", Map.of(
-            "count", String.valueOf(permCount)
-        ));
-        
         // Show permissions if requested
         if (args.length > 1 && args[1].equalsIgnoreCase("permissions")) {
             if (permissions.isEmpty()) {
-                MessageUtils.sendMessage(sender, "rank.info-permissions-none");
+                MessageUtils.sendMessage(sender, "ranks.info-permissions", Map.of(
+                    "permissions", "None"
+                ));
             } else {
                 List<String> sortedPerms = new ArrayList<>(permissions);
                 Collections.sort(sortedPerms);
                 
-                MessageUtils.sendMessage(sender, "rank.info-permissions-header");
-                
-                for (String perm : sortedPerms) {
-                    MessageUtils.sendMessage(sender, "rank.info-permission-entry", Map.of(
-                        "permission", perm
-                    ));
-                }
+                MessageUtils.sendMessage(sender, "ranks.info-permissions", Map.of(
+                    "permissions", String.join(", ", sortedPerms)
+                ));
             }
         } else {
             // Show how to view permissions
-            MessageUtils.sendMessage(sender, "rank.info-permissions-view", Map.of(
-                "command", "/frizzlenperms rankinfo " + rank.getName() + " permissions"
+            MessageUtils.sendMessage(sender, "ranks.info-permissions", Map.of(
+                "permissions", permCount + " permissions. Use /fp rankinfo " + rank.getName() + " permissions to view them."
             ));
         }
         
         // World permissions
         Map<String, Set<String>> worldPerms = rank.getWorldPermissions();
-        if (worldPerms.isEmpty()) {
-            MessageUtils.sendMessage(sender, "rank.info-world-permissions-none");
-        } else {
-            MessageUtils.sendMessage(sender, "rank.info-world-permissions-header");
-            
-            for (Map.Entry<String, Set<String>> entry : worldPerms.entrySet()) {
-                MessageUtils.sendMessage(sender, "rank.info-world-permissions-entry", Map.of(
-                    "world", entry.getKey(),
-                    "count", String.valueOf(entry.getValue().size())
-                ));
-            }
-            
-            // Show how to view world permissions
-            MessageUtils.sendMessage(sender, "rank.info-world-permissions-view", Map.of(
-                "command", "/frizzlenperms rankinfo " + rank.getName() + " world <world>"
+        if (!worldPerms.isEmpty()) {
+            MessageUtils.sendMessage(sender, "ranks.info-world-permissions", Map.of(
+                "worlds", worldPerms.entrySet().stream()
+                    .map(entry -> entry.getKey() + " (" + entry.getValue().size() + " permissions)")
+                    .collect(Collectors.joining(", "))
             ));
-        }
-        
-        // Show world permissions if requested
-        if (args.length > 2 && args[1].equalsIgnoreCase("world")) {
-            String world = args[2];
-            if (!worldPerms.containsKey(world) || worldPerms.get(world).isEmpty()) {
-                MessageUtils.sendMessage(sender, "rank.info-world-permissions-not-found", Map.of(
-                    "world", world
-                ));
-            } else {
+            
+            // Show world permissions if requested
+            if (args.length > 2 && args[1].equalsIgnoreCase("world")) {
+                String world = args[2];
                 Set<String> worldPermSet = worldPerms.get(world);
-                List<String> sortedWorldPerms = new ArrayList<>(worldPermSet);
-                Collections.sort(sortedWorldPerms);
-                
-                MessageUtils.sendMessage(sender, "rank.info-world-permissions-list-header", Map.of(
-                    "world", world,
-                    "count", String.valueOf(worldPermSet.size())
-                ));
-                
-                for (String perm : sortedWorldPerms) {
-                    MessageUtils.sendMessage(sender, "rank.info-permission-entry", Map.of(
-                        "permission", perm
+                if (worldPermSet != null && !worldPermSet.isEmpty()) {
+                    List<String> sortedWorldPerms = new ArrayList<>(worldPermSet);
+                    Collections.sort(sortedWorldPerms);
+                    
+                    MessageUtils.sendMessage(sender, "ranks.info-world-permissions-list", Map.of(
+                        "world", world,
+                        "permissions", String.join(", ", sortedWorldPerms)
                     ));
                 }
             }
