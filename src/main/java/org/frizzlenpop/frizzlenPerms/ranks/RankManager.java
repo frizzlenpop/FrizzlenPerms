@@ -1077,28 +1077,31 @@ public class RankManager {
             return false;
         }
         
-        // Remove inheritance
-        if (rank.removeInheritance(inheritedRankName)) {
-            // Save the rank
-            dataManager.saveRank(rank);
-            
-            // Log the action
-            auditManager.logAction(
-                actor != null ? actor.getUniqueId() : null,
-                actor != null ? actor.getName() : "Console",
-                AuditLog.ActionType.RANK_MODIFY,
-                rankName,
-                "Removed inheritance from " + inheritedRankName,
-                configManager.getServerName()
-            );
-            
-            // Update players with this rank
-            updatePlayersAfterRankChange(rankName);
-            
-            return true;
+        // Check if the inheritance exists
+        if (!rank.inherits(inheritedRankName)) {
+            return false;
         }
         
-        return false;
+        // Remove inheritance
+        rank.removeInheritance(inheritedRankName);
+        
+        // Save the rank
+        dataManager.saveRank(rank);
+        
+        // Log the action
+        auditManager.logAction(
+            actor != null ? actor.getUniqueId() : null,
+            actor != null ? actor.getName() : "Console",
+            AuditLog.ActionType.RANK_MODIFY,
+            rankName,
+            "Removed inheritance from " + inheritedRankName,
+            configManager.getServerName()
+        );
+        
+        // Update players with this rank
+        updatePlayersAfterRankChange(rankName);
+        
+        return true;
     }
     
     /**

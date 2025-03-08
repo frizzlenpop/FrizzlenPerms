@@ -84,13 +84,14 @@ public class CloneCommand implements SubCommand {
             sourcePlayerUUID = sourcePlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            sourcePlayerUUID = plugin.getDataManager().getPlayerUUID(sourcePlayerName);
-            if (sourcePlayerUUID == null) {
+            PlayerData sourceData = plugin.getDataManager().getPlayerDataByName(sourcePlayerName);
+            if (sourceData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", sourcePlayerName
                 ));
                 return false;
             }
+            sourcePlayerUUID = sourceData.getUuid();
         }
         
         // Get target player UUID
@@ -101,13 +102,14 @@ public class CloneCommand implements SubCommand {
             targetPlayerUUID = targetPlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            targetPlayerUUID = plugin.getDataManager().getPlayerUUID(targetPlayerName);
-            if (targetPlayerUUID == null) {
+            PlayerData targetData = plugin.getDataManager().getPlayerDataByName(targetPlayerName);
+            if (targetData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", targetPlayerName
                 ));
                 return false;
             }
+            targetPlayerUUID = targetData.getUuid();
         }
         
         // Store UUIDs in final variables for async use
@@ -132,51 +134,54 @@ public class CloneCommand implements SubCommand {
                 PlayerData targetPlayerData = plugin.getDataManager().getPlayerData(finalTargetPlayerUUID);
                 if (targetPlayerData == null) {
                     // Create new player data for target
-                    targetPlayerData = new PlayerData(finalTargetPlayerUUID);
-                    targetPlayerData.setName(targetPlayerName);
+                    targetPlayerData = new PlayerData(finalTargetPlayerUUID, targetPlayerName);
                 }
                 
                 // Clone data
                 targetPlayerData.setPrimaryRank(sourcePlayerData.getPrimaryRank());
-                targetPlayerData.setSecondaryRanks(new HashSet<>(sourcePlayerData.getSecondaryRanks()));
-                targetPlayerData.setPermissions(new HashSet<>(sourcePlayerData.getPermissions()));
+                targetPlayerData.getSecondaryRanks().clear();
+                targetPlayerData.getSecondaryRanks().addAll(sourcePlayerData.getSecondaryRanks());
+                targetPlayerData.getPermissions().clear();
+                targetPlayerData.getPermissions().addAll(sourcePlayerData.getPermissions());
+                
+                // Clone temporary ranks and permissions
+                targetPlayerData.getTemporaryRanks().clear();
+                targetPlayerData.getTemporaryRanks().putAll(sourcePlayerData.getTemporaryRanks());
+                targetPlayerData.getTemporaryPermissions().clear();
+                targetPlayerData.getTemporaryPermissions().putAll(sourcePlayerData.getTemporaryPermissions());
+                
+                // Clone world-specific permissions
+                targetPlayerData.getWorldPermissions().clear();
+                targetPlayerData.getWorldPermissions().putAll(sourcePlayerData.getWorldPermissions());
                 
                 // Save target player data
-                boolean success = plugin.getDataManager().savePlayerData(targetPlayerData);
+                plugin.getDataManager().savePlayerData(targetPlayerData);
                 
-                if (success) {
-                    // Log action
-                    String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
-                    plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.PLAYER_CLONE,
-                        finalTargetPlayerUUID,
-                        sender instanceof Player ? ((Player) sender).getUniqueId() : null,
-                        "Cloned data from " + sourcePlayerName,
-                        plugin.getConfigManager().getServerName()
-                    );
-                    
-                    // Apply changes if target player is online
-                    if (targetPlayer != null) {
-                        plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
-                        });
-                    }
-                    
-                    // Send success message
+                // Log action
+                plugin.getAuditManager().logAction(
+                    sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                    sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
+                    AuditLog.ActionType.PLAYER_RANK_CLONE,
+                    targetPlayerName,
+                    "Cloned data from " + sourcePlayerName,
+                    plugin.getConfigManager().getServerName(),
+                    finalTargetPlayerUUID
+                );
+                
+                // Apply changes if target player is online
+                if (targetPlayer != null) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "admin.clone-success", Map.of(
-                            "source", sourcePlayerName,
-                            "target", targetPlayerName
-                        ));
-                    });
-                } else {
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        MessageUtils.sendMessage(sender, "error.clone-failed", Map.of(
-                            "source", sourcePlayerName,
-                            "target", targetPlayerName
-                        ));
+                        plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
                     });
                 }
+                
+                // Send success message
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    MessageUtils.sendMessage(sender, "admin.clone-success", Map.of(
+                        "source", sourcePlayerName,
+                        "target", targetPlayerName
+                    ));
+                });
             } catch (Exception e) {
                 plugin.getLogger().severe("Error cloning player data: " + e.getMessage());
                 e.printStackTrace();

@@ -119,4 +119,11 @@ public interface StorageProvider {
      * @param maxEntries The maximum number of entries to keep
      */
     void cleanupAuditLogs(int maxEntries);
+
+    /**
+     * Deletes a player's data from storage.
+     *
+     * @param uuid The UUID of the player
+     */
+    void deletePlayerData(UUID uuid);
 } 

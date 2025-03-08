@@ -154,16 +154,9 @@ public class RankInheritanceGui implements PermissionGui {
             if (index < inheritedRanks.size()) {
                 String inheritedRankName = inheritedRanks.get(index);
                 if (viewer.hasPermission("frizzlenperms.admin.rankinheritance")) {
-                    plugin.getRankManager().removeInheritance(rankName, inheritedRankName, viewer);
-                    
-                    // Update permissions for all online players with this rank
-                    for (Player player : Bukkit.getOnlinePlayers()) {
-                        if (plugin.getPermissionManager().hasRank(player, rankName)) {
-                            plugin.getPermissionManager().calculateAndApplyPermissions(player);
-                        }
+                    if (plugin.getRankManager().removeInheritance(rankName, inheritedRankName, viewer)) {
+                        update();
                     }
-                    
-                    update();
                 }
             }
         } else {

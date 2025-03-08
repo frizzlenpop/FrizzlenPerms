@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.frizzlenpop.frizzlenPerms.FrizzlenPerms;
 import org.frizzlenpop.frizzlenPerms.commands.SubCommand;
 import org.frizzlenpop.frizzlenPerms.models.AuditLog;
+import org.frizzlenpop.frizzlenPerms.models.PlayerData;
 import org.frizzlenpop.frizzlenPerms.utils.MessageUtils;
 
 import java.util.*;
@@ -77,13 +78,14 @@ public class PurgeCommand implements SubCommand {
             playerUUID = targetPlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            playerUUID = plugin.getDataManager().getPlayerUUID(playerName);
-            if (playerUUID == null) {
+            PlayerData playerData = plugin.getDataManager().getPlayerDataByName(playerName);
+            if (playerData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", playerName
                 ));
                 return false;
             }
+            playerUUID = playerData.getUuid();
         }
         
         // Require confirmation
@@ -101,24 +103,49 @@ public class PurgeCommand implements SubCommand {
         // Purge player data asynchronously
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
+                // Remove player from any ranks they have
+                PlayerData playerData = plugin.getDataManager().getPlayerData(finalPlayerUUID);
+                if (playerData != null) {
+                    // Clear ranks
+                    playerData.setPrimaryRank(null);
+                    playerData.getSecondaryRanks().clear();
+                    playerData.getTemporaryRanks().clear();
+                    
+                    // Clear permissions
+                    playerData.getPermissions().clear();
+                    playerData.getTemporaryPermissions().clear();
+                    playerData.getWorldPermissions().clear();
+                    
+                    // Save cleared data before purging
+                    plugin.getDataManager().savePlayerData(playerData);
+                    
+                    // Update permissions if player is online
+                    if (targetPlayer != null && targetPlayer.isOnline()) {
+                        plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            plugin.getPermissionManager().removeAttachment(finalPlayerUUID);
+                        });
+                    }
+                }
+                
                 // Purge player data
-                boolean success = plugin.getDataManager().purgePlayerData(finalPlayerUUID);
+                boolean success = plugin.getDataManager().deletePlayerData(finalPlayerUUID);
                 
                 if (success) {
                     // Log action
-                    String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
                     plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.PLAYER_PURGE,
-                        finalPlayerUUID,
                         sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                        sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
+                        AuditLog.ActionType.PLAYER_DATA_PURGE,
+                        playerName,
                         "Purged player data",
-                        plugin.getConfigManager().getServerName()
+                        plugin.getConfigManager().getServerName(),
+                        finalPlayerUUID
                     );
                     
                     // Kick player if online
-                    if (targetPlayer != null) {
+                    if (targetPlayer != null && targetPlayer.isOnline()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
-                            targetPlayer.kickPlayer(MessageUtils.getMessageRaw("admin.purge-kick"));
+                            targetPlayer.kickPlayer(MessageUtils.formatColors("&cYour permissions data has been purged."));
                         });
                     }
                     

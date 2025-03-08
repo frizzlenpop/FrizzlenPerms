@@ -382,4 +382,31 @@ public class DataManager {
             }
         }
     }
+    
+    /**
+     * Deletes a player's data from storage and cache.
+     *
+     * @param uuid The UUID of the player
+     * @return Whether the operation was successful
+     */
+    public boolean deletePlayerData(UUID uuid) {
+        if (uuid == null) {
+            return false;
+        }
+
+        try {
+            // Remove from cache
+            playerDataCache.remove(uuid);
+            
+            // Delete from storage
+            if (storageProvider != null) {
+                storageProvider.deletePlayerData(uuid);
+            }
+            
+            return true;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to delete player data for " + uuid, e);
+            return false;
+        }
+    }
 } 

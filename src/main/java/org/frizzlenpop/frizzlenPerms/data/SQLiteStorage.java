@@ -914,4 +914,54 @@ public class SQLiteStorage implements StorageProvider {
         
         return allPlayers;
     }
+    
+    @Override
+    public void deletePlayerData(UUID uuid) {
+        try (Connection conn = dataSource.getConnection()) {
+            // Start transaction
+            conn.setAutoCommit(false);
+            
+            try {
+                // Delete player data
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM players WHERE uuid = ?")) {
+                    stmt.setString(1, uuid.toString());
+                    stmt.executeUpdate();
+                }
+                
+                // Delete world permissions
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM player_world_permissions WHERE player_uuid = ?")) {
+                    stmt.setString(1, uuid.toString());
+                    stmt.executeUpdate();
+                }
+                
+                // Delete temporary ranks
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM temporary_ranks WHERE player_uuid = ?")) {
+                    stmt.setString(1, uuid.toString());
+                    stmt.executeUpdate();
+                }
+                
+                // Delete temporary permissions
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "DELETE FROM temporary_permissions WHERE player_uuid = ?")) {
+                    stmt.setString(1, uuid.toString());
+                    stmt.executeUpdate();
+                }
+                
+                // Commit transaction
+                conn.commit();
+            } catch (SQLException e) {
+                // Rollback transaction
+                conn.rollback();
+                throw e;
+            } finally {
+                // Restore auto-commit
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to delete player data for " + uuid, e);
+        }
+    }
 } 

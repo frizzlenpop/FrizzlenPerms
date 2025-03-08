@@ -88,13 +88,14 @@ public class RemoveTempRankCommand implements SubCommand {
             playerUUID = targetPlayer.getUniqueId();
         } else {
             // Try to get UUID from offline player
-            playerUUID = plugin.getDataManager().getPlayerUUID(playerName);
-            if (playerUUID == null) {
+            PlayerData playerData = plugin.getDataManager().getPlayerDataByName(playerName);
+            if (playerData == null) {
                 MessageUtils.sendMessage(sender, "error.player-not-found", Map.of(
                     "player", playerName
                 ));
                 return false;
             }
+            playerUUID = playerData.getUuid();
         }
         
         // Store UUID in final variable for async use
@@ -115,7 +116,7 @@ public class RemoveTempRankCommand implements SubCommand {
                 }
                 
                 // Check if player has the temp rank
-                boolean hasTempRank = playerData.hasTempRank(rankName);
+                boolean hasTempRank = playerData.isTemporaryRank(rankName);
                 if (!hasTempRank) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         MessageUtils.sendMessage(sender, "error.player-no-temp-rank", Map.of(
@@ -127,23 +128,30 @@ public class RemoveTempRankCommand implements SubCommand {
                 }
                 
                 // Remove temp rank
-                boolean success = plugin.getDataManager().removeTempRank(finalPlayerUUID, rankName);
+                boolean success = plugin.getRankManager().removePlayerTemporaryRank(targetPlayer, rankName, sender instanceof Player ? (Player) sender : null);
                 
                 if (success) {
                     // Log action
-                    String executorName = sender instanceof Player ? ((Player) sender).getName() : "CONSOLE";
                     plugin.getAuditManager().logAction(
-                        AuditLog.ActionType.PLAYER_TEMP_RANK_REMOVE,
-                        finalPlayerUUID,
                         sender instanceof Player ? ((Player) sender).getUniqueId() : null,
+                        sender instanceof Player ? ((Player) sender).getName() : "CONSOLE",
+                        AuditLog.ActionType.PLAYER_RANK_REMOVE,
+                        playerName,
                         "Removed temporary rank " + rankName,
-                        plugin.getConfigManager().getServerName()
+                        plugin.getConfigManager().getServerName(),
+                        finalPlayerUUID
                     );
                     
                     // Apply changes if player is online
-                    if (targetPlayer != null) {
+                    if (targetPlayer != null && targetPlayer.isOnline()) {
                         plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            // Update permissions
                             plugin.getPermissionManager().calculateAndApplyPermissions(targetPlayer);
+                            
+                            // Update display name and prefix
+                            plugin.getPermissionManager().updatePlayerPrefix(targetPlayer);
+                            plugin.getPermissionManager().updatePlayerSuffix(targetPlayer);
+                            plugin.getPermissionManager().updateDisplayName(targetPlayer);
                         });
                     }
                     
@@ -197,8 +205,7 @@ public class RemoveTempRankCommand implements SubCommand {
                 PlayerData playerData = plugin.getDataManager().getPlayerData(playerUUID);
                 
                 if (playerData != null) {
-                    return playerData.getTempRanks().stream()
-                        .map(tempRank -> tempRank.getRankName())
+                    return playerData.getTemporaryRanks().keySet().stream()
                         .filter(name -> name.toLowerCase().startsWith(partial))
                         .collect(Collectors.toList());
                 }
